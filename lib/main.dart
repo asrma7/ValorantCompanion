@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:valorant_companion/Screens/landing_screen.dart';
+import 'package:valorant_companion/Screens/login_screen.dart';
+import 'package:valorant_companion/Screens/store_page.dart';
+import 'package:valorant_companion/Screens/featured_page.dart';
 
 import 'Screens/home_screen.dart';
 
@@ -17,7 +21,14 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.red,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const HomePage(title: 'Valorant Companion'),
+      routes: {
+        '/': (context) => const LandingScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/home': (context) => const HomeScreen(title: "Valorant Companion"),
+        '/featured': (context) =>
+            const FeaturedScreen(title: "Featured Bundle"),
+        '/store': (context) => const StoreScreen(title: "Daily Offers"),
+      },
       debugShowCheckedModeBanner: false,
     );
   }

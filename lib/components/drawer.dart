@@ -1,4 +1,11 @@
 import 'package:flutter/material.dart';
+import '../Utils/database_helper.dart';
+
+Map<String, dynamic> user = {
+  'username': '',
+  'password': '',
+  'region': '',
+};
 
 class MyDrawer extends StatefulWidget {
   const MyDrawer({Key? key}) : super(key: key);
@@ -8,17 +15,33 @@ class MyDrawer extends StatefulWidget {
 }
 
 class _MyDrawerState extends State<MyDrawer> {
+  final dbHelper = DatabaseHelper.instance;
+  @override
+  void initState() {
+    loadUserData();
+    super.initState();
+  }
+
+  void loadUserData() async {
+    await dbHelper.queryAllRows().then((value) {
+      setState(() {
+        user = value[0];
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          const UserAccountsDrawerHeader(
-            accountName: Text('Sneaky'),
-            accountEmail: Text('ashutosh1048 (EU)'),
-            currentAccountPicture: CircleAvatar(
-              backgroundImage: AssetImage('assets/images/valorant-logo.png'),
+          UserAccountsDrawerHeader(
+            accountName: Text('${user['display_name']}'),
+            accountEmail: Text(
+                '${user['game_name']}#${user['tagLine']} (${user['region']})'),
+            currentAccountPicture: const CircleAvatar(
+              backgroundImage: AssetImage('assets/images/valorant_logo.png'),
             ),
           ),
           ListTile(
@@ -29,10 +52,17 @@ class _MyDrawerState extends State<MyDrawer> {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.collections),
+            title: const Text('Featured Bundle'),
+            onTap: () {
+              Navigator.popAndPushNamed(context, '/featured');
+            },
+          ),
+          ListTile(
             leading: const Icon(Icons.card_giftcard),
             title: const Text('Daily Offers'),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.popAndPushNamed(context, '/store');
             },
           ),
           ListTile(
@@ -54,6 +84,16 @@ class _MyDrawerState extends State<MyDrawer> {
             title: const Text('Settings'),
             onTap: () {
               Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('Logout'),
+            onTap: () {
+              final dbHelper = DatabaseHelper.instance;
+              dbHelper.deleteAll();
+              Navigator.pop(context);
+              Navigator.popAndPushNamed(context, '/login');
             },
           ),
         ],

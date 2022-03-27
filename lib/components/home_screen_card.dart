@@ -18,6 +18,7 @@ class HomeScreenCard extends StatefulWidget {
 
 class _HomeScreenCardState extends State<HomeScreenCard> {
   bool _showFrontSide = true;
+  bool _isAnimating = false;
 
   @override
   void initState() {
@@ -52,9 +53,12 @@ class _HomeScreenCardState extends State<HomeScreenCard> {
   }
 
   void _switchCard() {
-    setState(() {
-      _showFrontSide = !_showFrontSide;
-    });
+    if (!_isAnimating) {
+      setState(() {
+        _showFrontSide = !_showFrontSide;
+        _isAnimating = true;
+      });
+    }
   }
 
   Widget _buildFront() {
@@ -115,14 +119,17 @@ class _HomeScreenCardState extends State<HomeScreenCard> {
         ),
         Positioned(
           child: GestureDetector(
-            child: const Icon(
-              Icons.info_outline,
-              color: Colors.white,
+            child: Container(
+              padding: const EdgeInsets.all(10.0),
+              child: const Icon(
+                Icons.info_outline,
+                color: Colors.white,
+              ),
             ),
             onTap: _switchCard,
           ),
-          top: 10.0,
-          right: 10.0,
+          top: 0.0,
+          right: 0.0,
         )
       ],
     );
@@ -130,6 +137,11 @@ class _HomeScreenCardState extends State<HomeScreenCard> {
 
   Widget __transitionBuilder(Widget widget, Animation<double> animation) {
     final rotateAnim = Tween(begin: pi, end: 0.0).animate(animation);
+    rotateAnim.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _isAnimating = false;
+      }
+    });
     return AnimatedBuilder(
       animation: rotateAnim,
       child: widget,

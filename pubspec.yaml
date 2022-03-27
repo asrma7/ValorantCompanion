@@ -13,7 +13,11 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.2
-  valorant_client: ^1.1.4
+  sqflite: ^2.0.2
+  dio: ^4.0.4
+  cookie_jar: ^3.0.1
+  dio_cookie_manager: ^2.0.0
+  path_provider: ^2.0.9
 
 dev_dependencies:
   flutter_test:
@@ -26,7 +30,9 @@ flutter:
 
   assets:
     - assets/images/logo.png
-    - assets/images/valorant-logo.png
+    - assets/images/logo_rounded.png
+    - assets/images/valorant_logo.png
+    - assets/images/featured.png
     - assets/images/store.png
     - assets/images/nightmarket.png
     - assets/images/inventory.png

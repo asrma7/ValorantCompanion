@@ -4,16 +4,16 @@ import 'package:valorant_companion/components/appbar.dart';
 import '../components/drawer.dart';
 import '../components/home_screen_card.dart';
 
-class HomePage extends StatefulWidget {
+class HomeScreen extends StatefulWidget {
   final String title;
 
-  const HomePage({Key? key, required this.title}) : super(key: key);
+  const HomeScreen({Key? key, required this.title}) : super(key: key);
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,7 +28,16 @@ class _HomePageState extends State<HomePage> {
         ),
         children: <Widget>[
           HomeScreenCard(
-            cardTitle: 'Store',
+            cardTitle: 'Featured',
+            cardSubtitle:
+                'Get information about your daily offers and featured item from the market',
+            cardImage: 'assets/images/featured.png',
+            onTap: () {
+              Navigator.pushNamed(context, '/featured');
+            },
+          ),
+          HomeScreenCard(
+            cardTitle: 'Daily Offers',
             cardSubtitle:
                 'Get information about your daily offers and featured item from the market',
             cardImage: 'assets/images/store.png',
