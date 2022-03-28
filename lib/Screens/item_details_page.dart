@@ -36,14 +36,16 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         widget.streamedVideo,
       ),
       aspectRatio: 16 / 9,
-      autoPlay: true,
-      looping: true,
+      autoPlay: false,
+      looping: false,
+      autoInitialize: true,
     );
     super.initState();
   }
 
   @override
   void dispose() {
+    _controller?.pause();
     _controller?.dispose();
     super.dispose();
   }
