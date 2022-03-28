@@ -56,7 +56,7 @@ class _StoreScreenState extends State<StoreScreen> {
         },
       ),
     );
-    await client.init(true);
+    await client.init();
     Future<Storefront?> resp = client.playerInterface.getStorefront();
     return resp;
   }

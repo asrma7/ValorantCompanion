@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../Utils/database_helper.dart';
 
 Map<String, dynamic> user = {
@@ -92,6 +93,7 @@ class _MyDrawerState extends State<MyDrawer> {
             onTap: () {
               final dbHelper = DatabaseHelper.instance;
               dbHelper.deleteAll();
+              const FlutterSecureStorage().deleteAll();
               Navigator.pop(context);
               Navigator.popAndPushNamed(context, '/login');
             },

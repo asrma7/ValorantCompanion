@@ -6,7 +6,6 @@ class UrlManager {
       'https://auth.riotgames.com/api/v1/authorization';
   static const String entitlementsUrl =
       'https://entitlements.auth.riotgames.com/api/token/v1';
-  static const String userInfoUrl = 'https://auth.riotgames.com/userinfo';
   static const String versionUrl = 'https://valorant-api.com/v1/version';
   static String getContentBaseUrl = 'https://valorant-api.com/v1';
   static String getSingleOfferUrl = 'https://assist.rumblemike.com/Offers';

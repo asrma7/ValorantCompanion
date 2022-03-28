@@ -2,16 +2,16 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
+import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:flutter/foundation.dart';
 import 'constants.dart';
 import 'interfaces/match.dart';
 
 import 'callback.dart';
 import 'enums.dart';
 import 'extensions.dart';
-import 'helpers.dart';
 import 'interfaces/asset.dart';
 import 'interfaces/player.dart';
 import 'models/serializable.dart';
@@ -23,7 +23,7 @@ part 'authentication/rso_handler.dart';
 
 class ValorantClient {
   late final Dio _client = Dio();
-  late CookieJar _cookieJar;
+  late CookieJar _cookieJar = CookieJar();
   late final RSOHandler _rsoHandler = RSOHandler(_client, _userDetails);
 
   final UserDetails _userDetails;
@@ -49,8 +49,6 @@ class ValorantClient {
   ///
   /// After [sessionValidityInHours] period, current authorized session will be invalid and you will need to authorize with riot api again.
   ///
-  /// If you have [handleSessionAutomatically] set to True, it will be handled automatically
-  int get sessionValidityInHours => _rsoHandler._accessTokenExpiryInHours;
 
   /// Gets the headers which helps to authorize a request to RIOT Valorant API.
   ///
@@ -92,15 +90,31 @@ class ValorantClient {
   /// Initializes the client by authorizing the user with the constructor supplied [UserDetails]
   ///
   /// Must be called on every instance of [ValorantClient] to send authorized requests from the instance.
-  Future<bool> init(bool handleSessionAutomatically) async {
-    if (_rsoHandler._isLoggedIn) {
+  Future<bool> init() async {
+    _cookieJar = shouldPersistSession ? PersistCookieJar() : CookieJar();
+    _client.interceptors.add(CookieManager(_cookieJar));
+    if (await _isLoggedIn() && await _isTokenValid()) {
+      Map<String, dynamic> _authHeaders = {
+        "Content-Type": "application/json",
+        "authorization":
+            "Bearer ${await const FlutterSecureStorage().read(key: 'accessToken')}",
+        "X-Riot-Entitlements-JWT":
+            await const FlutterSecureStorage().read(key: 'entitlementsToken'),
+        "X-Riot-ClientVersion":
+            await const FlutterSecureStorage().read(key: 'clientVersion'),
+        ClientConstants.clientPlatformHeaderKey:
+            ClientConstants.clientPlatformHeaderValue,
+      };
+      _client.options.headers.addAll(_authHeaders);
+      String? puuid = await const FlutterSecureStorage().read(key: 'userPuuid');
+      if (puuid != null) {
+        _rsoHandler._userPuuid = puuid;
+      }
+      _isInitialized = true;
       return true;
     }
 
-    _cookieJar = shouldPersistSession ? PersistCookieJar() : CookieJar();
-    _client.interceptors.add(CookieManager(_cookieJar));
-
-    if (!await _rsoHandler.authenticate(handleSessionAutomatically)) {
+    if (!await _rsoHandler.authenticate()) {
       callback.invokeErrorCallback('Authentication Failed.');
       return false;
     }
@@ -204,5 +218,18 @@ class ValorantClient {
       callback.invokeRequestErrorCallback(e);
       return null;
     }
+  }
+
+  Future<bool> _isLoggedIn() async {
+    return await const FlutterSecureStorage().containsKey(key: "accessToken");
+  }
+
+  Future<bool> _isTokenValid() async {
+    String? expiry =
+        await const FlutterSecureStorage().read(key: 'tokenExpiry');
+    if (DateTime.parse(expiry!).isBefore(DateTime.now())) {
+      return false;
+    }
+    return true;
   }
 }

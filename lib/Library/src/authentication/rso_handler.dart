@@ -5,64 +5,43 @@ class RSOHandler {
   final UserDetails _userDetails;
   final Map<String, dynamic> _authHeaders = {};
 
-  String _countryCode = '';
   String _tokenType = '';
-  int _accessTokenExpiryInHours = 1;
   String _userPuuid = '';
-  Timer? _validityTimer;
-
-  bool get _isLoggedIn => !isNullOrEmpty(_userPuuid);
+  int _tokenExpiry = 3600;
 
   RSOHandler(this._client, this._userDetails);
 
-  Future<bool> authenticate(bool handleSessionAutomatically) async {
-    _countryCode = '';
+  Future<bool> authenticate() async {
     _tokenType = '';
     _authHeaders.clear();
     _userPuuid = '';
-    _validityTimer?.cancel();
 
-    if (await _fetchClientCountry() &&
-        await _fetchAccessToken() &&
+    await _client.post(
+      UrlManager.authUrl,
+      data: {
+        "client_id": "play-valorant-web-prod",
+        "nonce": 1,
+        "redirect_uri": "https://playvalorant.com/opt_in",
+        "response_type": "token id_token",
+      },
+      options: Options(
+        headers: {
+          "Content-Type": "application/json",
+        },
+      ),
+    );
+
+    if (await _fetchAccessToken() &&
         await _fetchEntitlements() &&
-        await _fetchClientVersion() &&
-        await _fetchUserInfo()) {
+        await _fetchClientVersion()) {
       _authHeaders[ClientConstants.clientPlatformHeaderKey] =
           ClientConstants.clientPlatformHeaderValue;
       _client.options.headers.addAll(_authHeaders);
-
-      if (handleSessionAutomatically) {
-        _validityTimer = Timer(Duration(hours: _accessTokenExpiryInHours),
-            () async => authenticate(handleSessionAutomatically));
-      }
 
       return true;
     }
 
     return false;
-  }
-
-  Future<bool> _fetchClientCountry() async {
-    final payload = jsonEncode(
-      {
-        'client_id': 'play-valorant-web-prod',
-        'nonce': 1,
-        'redirect_uri': 'https://playvalorant.com/opt_in',
-        'response_type': 'token id_token',
-      },
-    );
-
-    final response = await _client.post(
-      UrlManager.authUrl,
-      data: payload,
-    );
-
-    if (response.statusCode != 200) {
-      return false;
-    }
-
-    _countryCode = response.data['country'] ?? '';
-    return _countryCode.isNotEmpty;
   }
 
   Future<bool> _fetchAccessToken() async {
@@ -77,36 +56,67 @@ class RSOHandler {
         'password': _userDetails.password,
       },
     );
+    try {
+      final response = await _client.put(
+        UrlManager.authUrl,
+        data: payload,
+      );
 
-    final response = await _client.put(
-      UrlManager.authUrl,
-      data: payload,
-    );
+      if (response.statusCode != 200) {
+        return false;
+      }
 
-    if (response.statusCode != 200) {
+      if (response.data['error'] != null &&
+          response.data['error'] == 'auth_failure') {
+        return false;
+      }
+
+      final authUrl =
+          (response.data['response']?['parameters']?['uri'] ?? '') as String;
+      final parsedUri = Uri.tryParse(authUrl.replaceFirst('#', '?'));
+
+      if (parsedUri == null || !parsedUri.hasQuery) {
+        return false;
+      }
+
+      _tokenType = parsedUri.queryParameters['token_type'] as String;
+      _authHeaders[HttpHeaders.authorizationHeader] =
+          '$_tokenType ${parsedUri.queryParameters['access_token'] as String}';
+      _tokenExpiry =
+          (int.tryParse(parsedUri.queryParameters['expires_in'] ?? '3600') ??
+              3600);
+      FlutterSecureStorage().write(
+        key: "tokenExpiry",
+        value: DateTime.now()
+            .add(
+              Duration(seconds: _tokenExpiry - 10),
+            )
+            .toString(),
+      );
+      _userPuuid = response.headers['set-cookie']!
+          .singleWhere(
+            (cookie) => cookie.startsWith('sub='),
+          )
+          .split(';')[0]
+          .split('=')[1];
+      if (parsedUri.queryParameters['access_token'] != null) {
+        const FlutterSecureStorage().write(
+          key: "accessToken",
+          value: parsedUri.queryParameters['access_token'] as String,
+        );
+        const FlutterSecureStorage().write(
+          key: "userPuuid",
+          value: _userPuuid,
+        );
+        return true;
+      }
       return false;
+    } on DioError catch (error) {
+      if (kDebugMode) {
+        print(error.message);
+      }
     }
-
-    if (response.data['error'] != null &&
-        response.data['error'] == 'auth_failure') {
-      return false;
-    }
-
-    final authUrl =
-        (response.data['response']?['parameters']?['uri'] ?? '') as String;
-    final parsedUri = Uri.tryParse(authUrl.replaceFirst('#', '?'));
-
-    if (parsedUri == null || !parsedUri.hasQuery) {
-      return false;
-    }
-
-    _accessTokenExpiryInHours =
-        (int.tryParse(parsedUri.queryParameters['expires_in'] ?? '1') ?? 1) ~/
-            3600;
-    _tokenType = parsedUri.queryParameters['token_type'] as String;
-    _authHeaders[HttpHeaders.authorizationHeader] =
-        '$_tokenType ${parsedUri.queryParameters['access_token'] as String}';
-    return parsedUri.queryParameters['access_token'] != null;
+    return false;
   }
 
   Future<bool> _fetchEntitlements() async {
@@ -122,22 +132,14 @@ class RSOHandler {
 
     _authHeaders['X-Riot-Entitlements-JWT'] =
         response.data['entitlements_token'] as String;
-    return response.data['entitlements_token'] != null;
-  }
-
-  Future<bool> _fetchUserInfo() async {
-    final response = await _client.post(
-      UrlManager.userInfoUrl,
-      data: {},
-      options: Options(headers: _authHeaders),
-    );
-
-    if (response.statusCode != 200) {
-      return false;
+    if (response.data['entitlements_token'] != null) {
+      const FlutterSecureStorage().write(
+        key: "entitlementsToken",
+        value: response.data['entitlements_token'] as String,
+      );
+      return true;
     }
-
-    _userPuuid = response.data['sub'];
-    return !isNullOrEmpty(_userPuuid);
+    return false;
   }
 
   Future<bool> _fetchClientVersion() async {
@@ -149,6 +151,14 @@ class RSOHandler {
 
     _authHeaders['X-Riot-ClientVersion'] =
         response.data['data']['riotClientVersion'] as String;
-    return response.data['data']['riotClientVersion'] != null;
+
+    if (response.data['data']['riotClientVersion'] != null) {
+      const FlutterSecureStorage().write(
+        key: "clientVersion",
+        value: response.data['data']['riotClientVersion'] as String,
+      );
+      return true;
+    }
+    return false;
   }
 }

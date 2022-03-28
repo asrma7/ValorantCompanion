@@ -191,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
 
-    bool resp = await client.init(false);
+    bool resp = await client.init();
 
     if (resp) {
       User? user = await client.playerInterface.getPlayer();

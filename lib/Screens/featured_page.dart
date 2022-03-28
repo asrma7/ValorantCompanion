@@ -57,7 +57,7 @@ class _FeaturedScreenState extends State<FeaturedScreen> {
         },
       ),
     );
-    await client.init(true);
+    await client.init();
     Future<Storefront?> resp = client.playerInterface.getStorefront();
     return resp;
   }
