@@ -17,14 +17,14 @@ import 'interfaces/player.dart';
 import 'models/serializable.dart';
 import 'url_manager.dart';
 import 'user_details.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 part 'authentication/rso_handler.dart';
 
 class ValorantClient {
   late final Dio _client = Dio();
   late CookieJar _cookieJar;
-  late final RSOHandler _rsoHandler =
-      RSOHandler(_client, _userDetails, shouldPersistSession);
+  late final RSOHandler _rsoHandler = RSOHandler(_client, _userDetails);
 
   final UserDetails _userDetails;
   final bool shouldPersistSession;

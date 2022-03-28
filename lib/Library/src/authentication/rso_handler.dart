@@ -4,7 +4,6 @@ class RSOHandler {
   final Dio _client;
   final UserDetails _userDetails;
   final Map<String, dynamic> _authHeaders = {};
-  final bool shouldPersistSession;
 
   String _countryCode = '';
   String _tokenType = '';
@@ -14,7 +13,7 @@ class RSOHandler {
 
   bool get _isLoggedIn => !isNullOrEmpty(_userPuuid);
 
-  RSOHandler(this._client, this._userDetails, this.shouldPersistSession);
+  RSOHandler(this._client, this._userDetails);
 
   Future<bool> authenticate(bool handleSessionAutomatically) async {
     _countryCode = '';

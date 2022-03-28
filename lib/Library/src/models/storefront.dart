@@ -13,15 +13,22 @@ class Storefront extends ISerializable<Storefront> {
   final FeaturedBundle? featuredBundle;
   final SkinsPanelLayout? skinsPanelLayout;
 
-  factory Storefront.fromJson(String str) => Storefront.fromMap(json.decode(str));
+  factory Storefront.fromJson(String str) =>
+      Storefront.fromMap(json.decode(str));
 
   @override
   Map<String, dynamic> toJson() => toMap();
 
   factory Storefront.fromMap(Map<String, dynamic> json) => Storefront(
-        featuredTheme: json["FeaturedTheme"] == null ? null : FeaturedTheme.fromMap(json["FeaturedTheme"]),
-        featuredBundle: json["FeaturedBundle"] == null ? null : FeaturedBundle.fromMap(json["FeaturedBundle"]),
-        skinsPanelLayout: json["SkinsPanelLayout"] == null ? null : SkinsPanelLayout.fromMap(json["SkinsPanelLayout"]),
+        featuredTheme: json["FeaturedTheme"] == null
+            ? null
+            : FeaturedTheme.fromMap(json["FeaturedTheme"]),
+        featuredBundle: json["FeaturedBundle"] == null
+            ? null
+            : FeaturedBundle.fromMap(json["FeaturedBundle"]),
+        skinsPanelLayout: json["SkinsPanelLayout"] == null
+            ? null
+            : SkinsPanelLayout.fromMap(json["SkinsPanelLayout"]),
       );
 
   Map<String, dynamic> toMap() => {
@@ -43,13 +50,17 @@ class FeaturedBundle {
   final FeaturedTheme? bundle;
   final int bundleRemainingDurationInSeconds;
 
-  factory FeaturedBundle.fromJson(String str) => FeaturedBundle.fromMap(json.decode(str));
+  factory FeaturedBundle.fromJson(String str) =>
+      FeaturedBundle.fromMap(json.decode(str));
 
   String toJson() => json.encode(toMap());
 
   factory FeaturedBundle.fromMap(Map<String, dynamic> json) => FeaturedBundle(
-        bundle: json["Bundle"] == null ? null : FeaturedTheme.fromMap(json["Bundle"]),
-        bundleRemainingDurationInSeconds: json["BundleRemainingDurationInSeconds"] ?? 0,
+        bundle: json["Bundle"] == null
+            ? null
+            : FeaturedTheme.fromMap(json["Bundle"]),
+        bundleRemainingDurationInSeconds:
+            json["BundleRemainingDurationInSeconds"] ?? 0,
       );
 
   Map<String, dynamic> toMap() => {
@@ -71,7 +82,8 @@ class FeaturedTheme {
   final String? currencyId;
   final List<ItemElement> items;
 
-  factory FeaturedTheme.fromJson(String str) => FeaturedTheme.fromMap(json.decode(str));
+  factory FeaturedTheme.fromJson(String str) =>
+      FeaturedTheme.fromMap(json.decode(str));
 
   String toJson() => json.encode(toMap());
 
@@ -79,7 +91,10 @@ class FeaturedTheme {
         id: json["ID"],
         dataAssetId: json["DataAssetID"],
         currencyId: json["CurrencyID"],
-        items: json["Items"] == null ? [] : List<ItemElement>.from(json["Items"].map((x) => ItemElement.fromMap(x))),
+        items: json["Items"] == null
+            ? []
+            : List<ItemElement>.from(
+                json["Items"].map((x) => ItemElement.fromMap(x))),
       );
 
   Map<String, dynamic> toMap() => {
@@ -96,6 +111,7 @@ class ItemElement {
     this.basePrice = 0.0,
     this.currencyId,
     this.discountPercent = 0.0,
+    this.discountedPrice = 0.0,
     this.isPromoItem = false,
   });
 
@@ -103,9 +119,11 @@ class ItemElement {
   final double basePrice;
   final String? currencyId;
   final double discountPercent;
+  final double discountedPrice;
   final bool isPromoItem;
 
-  factory ItemElement.fromJson(String str) => ItemElement.fromMap(json.decode(str));
+  factory ItemElement.fromJson(String str) =>
+      ItemElement.fromMap(json.decode(str));
 
   String toJson() => json.encode(toMap());
 
@@ -175,17 +193,22 @@ class SkinsPanelLayout {
   final List<String> singleItemOffers;
   final int singleItemOffersRemainingDurationInSeconds;
 
-  factory SkinsPanelLayout.fromJson(String str) => SkinsPanelLayout.fromMap(json.decode(str));
+  factory SkinsPanelLayout.fromJson(String str) =>
+      SkinsPanelLayout.fromMap(json.decode(str));
 
   String toJson() => json.encode(toMap());
 
-  factory SkinsPanelLayout.fromMap(Map<String, dynamic> json) => SkinsPanelLayout(
-        singleItemOffers: List<String>.from(json["SingleItemOffers"].map((x) => x)),
-        singleItemOffersRemainingDurationInSeconds: json["SingleItemOffersRemainingDurationInSeconds"],
+  factory SkinsPanelLayout.fromMap(Map<String, dynamic> json) =>
+      SkinsPanelLayout(
+        singleItemOffers:
+            List<String>.from(json["SingleItemOffers"].map((x) => x)),
+        singleItemOffersRemainingDurationInSeconds:
+            json["SingleItemOffersRemainingDurationInSeconds"],
       );
 
   Map<String, dynamic> toMap() => {
         "SingleItemOffers": List<dynamic>.from(singleItemOffers.map((x) => x)),
-        "SingleItemOffersRemainingDurationInSeconds": singleItemOffersRemainingDurationInSeconds,
+        "SingleItemOffersRemainingDurationInSeconds":
+            singleItemOffersRemainingDurationInSeconds,
       };
 }

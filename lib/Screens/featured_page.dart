@@ -98,6 +98,9 @@ class _FeaturedScreenState extends State<FeaturedScreen> {
                         itemId: itemId!,
                         itemType:
                             ItemTypeConstants.getItemTypeFromId(itemTypeId!),
+                        basePrice: item.basePrice,
+                        discountedPrice: item.discountedPrice,
+                        discountPercent: item.discountPercent,
                       );
                     },
                     childCount: items.length,

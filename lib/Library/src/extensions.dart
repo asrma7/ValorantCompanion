@@ -1,5 +1,3 @@
-import 'package:valorant_companion/Library/src/enums.dart';
-
 import 'helpers.dart';
 import 'models/asset_id.dart';
 import 'models/event.dart';

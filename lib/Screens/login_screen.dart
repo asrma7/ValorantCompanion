@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:valorant_companion/Library/valorant_client.dart';
@@ -19,6 +20,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   Region region = Region.ap;
+
+  bool _handlingForm = false;
 
   @override
   Widget build(BuildContext context) {
@@ -54,20 +57,28 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: const TextStyle(color: Colors.red),
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: _usernameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Username',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    border: OutlineInputBorder(),
+                AutofillGroup(
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _usernameController,
+                        autofillHints: const [AutofillHints.username],
+                        decoration: const InputDecoration(
+                          labelText: 'Username',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: _passwordController,
+                        autofillHints: const [AutofillHints.password],
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Password',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 //Dropdown select
@@ -104,16 +115,37 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  child: const Text('Login'),
-                  onPressed: () {
-                    processLogin().then((value) {
-                      if (value) {
-                        Navigator.popAndPushNamed(context, '/home');
-                      } else {
-                        setState(() {});
-                      }
-                    });
-                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: _handlingForm
+                        ? const [
+                            Text('Login'),
+                            SizedBox(width: 8),
+                            CupertinoActivityIndicator(
+                              color: Colors.white,
+                            )
+                          ]
+                        : const [
+                            Text('Login'),
+                          ],
+                  ),
+                  onPressed: _handlingForm
+                      ? null
+                      : () {
+                          setState(() {
+                            _handlingForm = true;
+                          });
+                          processLogin().then((value) {
+                            setState(() {
+                              _handlingForm = false;
+                            });
+                            if (value) {
+                              Navigator.popAndPushNamed(context, '/home');
+                            } else {
+                              setState(() {});
+                            }
+                          });
+                        },
                 ),
               ],
             ),
