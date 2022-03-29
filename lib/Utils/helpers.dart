@@ -8,8 +8,8 @@ Region? stringToRegion(String region) {
       return Region.eu;
     case 'AP':
       return Region.ap;
-    case 'KO':
-      return Region.ko;
+    case 'KR':
+      return Region.kr;
     default:
       return null;
   }

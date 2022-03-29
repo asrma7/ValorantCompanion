@@ -2,7 +2,7 @@ enum Region {
   na,
   eu,
   ap,
-  ko,
+  kr,
 }
 
 enum HttpMethod {

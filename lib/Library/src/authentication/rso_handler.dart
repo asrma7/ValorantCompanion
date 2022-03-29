@@ -85,7 +85,7 @@ class RSOHandler {
       _tokenExpiry =
           (int.tryParse(parsedUri.queryParameters['expires_in'] ?? '3600') ??
               3600);
-      FlutterSecureStorage().write(
+      const FlutterSecureStorage().write(
         key: "tokenExpiry",
         value: DateTime.now()
             .add(

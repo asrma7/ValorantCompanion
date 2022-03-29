@@ -89,27 +89,29 @@ class _LoginScreenState extends State<LoginScreen> {
                   textAlign: TextAlign.center,
                 ),
                 DropdownButton<Region>(
-                  value: Region.ap,
+                  value: region,
                   items: const [
                     DropdownMenuItem<Region>(
                       value: Region.na,
-                      child: Text('NA'),
+                      child: Text('North America'),
                     ),
                     DropdownMenuItem<Region>(
                       value: Region.eu,
-                      child: Text('EU'),
+                      child: Text('Europe'),
                     ),
                     DropdownMenuItem<Region>(
                       value: Region.ap,
-                      child: Text('AP'),
+                      child: Text('Asia Pacific'),
                     ),
                     DropdownMenuItem<Region>(
-                      value: Region.ko,
-                      child: Text('KR'),
+                      value: Region.kr,
+                      child: Text('Korea (South)'),
                     ),
                   ],
                   onChanged: (value) {
-                    region = value!;
+                    setState(() {
+                      region = value!;
+                    });
                   },
                 ),
 
