@@ -1,5 +1,5 @@
 import '../enums.dart';
-import '../models/id_collection.dart';
+import '../models/serializable.dart';
 import '../url_manager.dart';
 import '../valorant_client_base.dart';
 
@@ -8,14 +8,31 @@ class AssetInterface {
 
   AssetInterface(this._client);
 
-  Future<IdCollection?> getAssets() async {
-    final requestUri = Uri.parse(
-        '${UrlManager.getContentBaseUrlForRegion(_client.userRegion)}/content-service/v2/content');
+  Future<T?> getAssets<T extends ISerializable<T>>({
+    required T typeResolver,
+    required String assetType,
+  }) async {
+    final requestUri = Uri.parse('${UrlManager.getContentBaseUrl}/$assetType');
     final response = await _client.executeRawRequest(
       method: HttpMethod.get,
       uri: requestUri,
     );
 
-    return response != null ? IdCollection.fromMap(response) : null;
+    return response != null ? typeResolver.fromJson(response) : null;
+  }
+
+  Future<T?> getSingleAssets<T extends ISerializable<T>>({
+    required T typeResolver,
+    required String assetType,
+    required String assetId,
+  }) async {
+    final requestUri =
+        Uri.parse('${UrlManager.getContentBaseUrl}/$assetType/$assetId');
+    final response = await _client.executeRawRequest(
+      method: HttpMethod.get,
+      uri: requestUri,
+    );
+
+    return response != null ? typeResolver.fromJson(response) : null;
   }
 }

@@ -87,6 +87,14 @@ class _HomeScreenState extends State<HomeScreen> {
               Navigator.pushNamed(context, '/leaderboard');
             },
           ),
+          HomeScreenCard(
+            cardTitle: 'Crosshair',
+            cardSubtitle: 'Get your favourite crosshair presets',
+            cardImage: 'assets/images/crosshair.png',
+            onTap: () {
+              Navigator.pushNamed(context, '/crosshair');
+            },
+          ),
         ],
       ),
       drawer: const MyDrawer(),

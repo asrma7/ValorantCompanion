@@ -1,3 +1,5 @@
+import 'package:valorant_companion/Library/src/models/inventory.dart';
+
 import '../constants.dart';
 import '../enums.dart';
 import '../models/balance.dart';
@@ -14,7 +16,8 @@ class PlayerInterface {
   PlayerInterface(this._client);
 
   Future<User?> getPlayer() async {
-    final requestUri = Uri.parse('${UrlManager.getBaseUrlForRegion(_client.userRegion)}/name-service/v2/players');
+    final requestUri = Uri.parse(
+        '${UrlManager.getBaseUrlForRegion(_client.userRegion)}/name-service/v2/players');
     final response = await _client.executeRawRequest(
       method: HttpMethod.put,
       uri: requestUri,
@@ -29,7 +32,8 @@ class PlayerInterface {
   }
 
   Future<Balance?> getBalance() async {
-    final requestUri = Uri.parse('${UrlManager.getBaseUrlForRegion(_client.userRegion)}/store/v1/wallet/${_client.userPuuid}');
+    final requestUri = Uri.parse(
+        '${UrlManager.getBaseUrlForRegion(_client.userRegion)}/store/v1/wallet/${_client.userPuuid}');
     final response = await _client.executeRawRequest(
       method: HttpMethod.get,
       uri: requestUri,
@@ -40,14 +44,20 @@ class PlayerInterface {
     }
 
     return Balance(
-      valorantPoints: (response['Balances'][CurrencyConstants.valorantPointsId] ?? 0) as int,
-      radianitePoints: (response['Balances'][CurrencyConstants.radianitePointsId] ?? 0) as int,
-      unknowCurrency: (response['Balances'][CurrencyConstants.unknownCurrency] ?? 0) as int,
+      valorantPoints:
+          (response['Balances'][CurrencyConstants.valorantPointsId] ?? 0)
+              as int,
+      radianitePoints:
+          (response['Balances'][CurrencyConstants.radianitePointsId] ?? 0)
+              as int,
+      unknowCurrency:
+          (response['Balances'][CurrencyConstants.unknownCurrency] ?? 0) as int,
     );
   }
 
   Future<MMR?> getMMR() async {
-    final requestUri = Uri.parse('${UrlManager.getBaseUrlForRegion(_client.userRegion)}/mmr/v1/players/${_client.userPuuid}/competitiveupdates');
+    final requestUri = Uri.parse(
+        '${UrlManager.getBaseUrlForRegion(_client.userRegion)}/mmr/v1/players/${_client.userPuuid}/competitiveupdates');
     final response = await _client.executeGenericRequest<MMR>(
       typeResolver: MMR(),
       method: HttpMethod.get,
@@ -62,7 +72,8 @@ class PlayerInterface {
   }
 
   Future<Storefront?> getStorefront() async {
-    final requestUri = Uri.parse('${UrlManager.getBaseUrlForRegion(_client.userRegion)}/store/v2/storefront/${_client.userPuuid}');
+    final requestUri = Uri.parse(
+        '${UrlManager.getBaseUrlForRegion(_client.userRegion)}/store/v2/storefront/${_client.userPuuid}');
 
     return await _client.executeGenericRequest<Storefront>(
       typeResolver: Storefront(),
@@ -80,5 +91,20 @@ class PlayerInterface {
       method: HttpMethod.get,
       uri: requestUri,
     );
+  }
+
+  Future<Inventory?> getInventory() async {
+    final requestUri = Uri.parse(
+        '${UrlManager.getBaseUrlForRegion(_client.userRegion)}/personalization/v2/players/${_client.userPuuid}/playerloadout');
+    final response = await _client.executeRawRequest(
+      method: HttpMethod.get,
+      uri: requestUri,
+    );
+
+    if (response == null) {
+      return null;
+    }
+
+    return Inventory.fromJson(response);
   }
 }

@@ -42,6 +42,7 @@ flutter:
     - assets/images/stats.png
     - assets/images/matches.png
     - assets/images/leaderboard.png
+    - assets/images/crosshair.png
 
   # fonts:
   #   - family: Schyler

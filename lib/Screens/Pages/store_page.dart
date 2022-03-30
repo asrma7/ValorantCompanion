@@ -2,45 +2,44 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:valorant_companion/Components/store_item.dart';
 import 'package:valorant_companion/Components/timer.dart';
+import 'package:valorant_companion/Library/src/models/content_tiers.dart';
 import 'package:valorant_companion/Utils/database_helper.dart';
 import 'package:valorant_companion/Utils/helpers.dart';
-import '../Library/valorant_client.dart';
-import '../Library/src/models/storefront.dart';
+import '../../Library/src/models/weapons.dart';
+import '/Library/valorant_client.dart';
 import 'package:dio/dio.dart';
 
-class StoreScreen extends StatefulWidget {
+class StorePage extends StatefulWidget {
   final String title;
-  const StoreScreen({Key? key, required this.title}) : super(key: key);
+  const StorePage({Key? key, required this.title}) : super(key: key);
 
   @override
-  State<StoreScreen> createState() => _StoreScreenState();
+  State<StorePage> createState() => _StorePageState();
 }
 
-class _StoreScreenState extends State<StoreScreen> {
+class _StorePageState extends State<StorePage> {
   final dbHelper = DatabaseHelper.instance;
 
-  late Map<String, dynamic> user;
+  Map<String, dynamic>? user;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadUserData();
-  }
-
-  void _loadUserData() async {
+  Future<bool> _loadUserData() async {
     await dbHelper.queryAllRows().then((value) {
       setState(() {
         user = value[0];
       });
     });
+    return true;
   }
 
   Future? getStoreOffers() async {
+    if (user == null) {
+      await _loadUserData();
+    }
     ValorantClient client = ValorantClient(
       UserDetails(
-        userName: user['username'],
-        password: user['password'],
-        region: stringToRegion(user['region'])!,
+        userName: user!['username'],
+        password: user!['password'],
+        region: stringToRegion(user!['region'])!,
       ),
       shouldPersistSession: false,
       callback: Callback(
@@ -57,8 +56,14 @@ class _StoreScreenState extends State<StoreScreen> {
       ),
     );
     await client.init();
-    Future<Storefront?> resp = client.playerInterface.getStorefront();
-    return resp;
+    var futures = <Future>[
+      client.assetInterface
+          .getAssets<Skins>(typeResolver: Skins(), assetType: 'weapons/skins'),
+      client.assetInterface.getAssets<ContentTiers>(
+          typeResolver: ContentTiers(), assetType: 'contenttiers'),
+      client.playerInterface.getStorefront(),
+    ];
+    return await Future.wait(futures);
   }
 
   @override
@@ -71,7 +76,9 @@ class _StoreScreenState extends State<StoreScreen> {
         future: getStoreOffers(),
         builder: (context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
-            var response = snapshot.data;
+            Skins skinList = snapshot.data[0]!;
+            ContentTiers contentTiersList = snapshot.data[1]!;
+            var response = snapshot.data[2]!;
             List<String> items = response.skinsPanelLayout.singleItemOffers;
             return CustomScrollView(
               slivers: [
@@ -87,8 +94,16 @@ class _StoreScreenState extends State<StoreScreen> {
                 SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
+                      Skin skin = skinList.skinList.singleWhere((element) =>
+                          element.levels!.first.uuid == items[index]);
                       return StoreItem(
                         itemId: items[index],
+                        displayIcon:
+                            skin.levels!.first.displayIcon ?? skin.displayIcon,
+                        displayName: skin.displayName,
+                        streamedVideo: skin.levels!.last.streamedVideo,
+                        contentTier: contentTiersList
+                            .getPlayerTitleFromId(skin.contentTierUuid!),
                       );
                     },
                     childCount: items.length,

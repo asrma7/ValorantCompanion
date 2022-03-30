@@ -47,7 +47,6 @@ class ItemTypeConstants {
       case weapon:
         return ItemType.weapon;
     }
-
     return ItemType.unknown;
   }
 }

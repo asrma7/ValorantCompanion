@@ -4,42 +4,47 @@ import 'package:flutter/material.dart';
 import 'package:valorant_companion/Library/src/url_manager.dart';
 import 'package:video_player/video_player.dart';
 
-import '../Library/src/enums.dart';
+import '/Library/src/enums.dart';
 
-class ItemDetailsScreen extends StatefulWidget {
-  final String itemId, displayName, displayIcon, streamedVideo;
+class ItemDetailsPage extends StatefulWidget {
+  final String itemId, displayName;
+  final String? displayIcon, streamedVideo, titleText;
   final double? basePrice, discountedPrice, discountPercent;
   final ItemType itemType;
-  const ItemDetailsScreen({
+  const ItemDetailsPage({
     Key? key,
     required this.itemId,
     required this.itemType,
     required this.displayName,
-    required this.displayIcon,
-    required this.streamedVideo,
+    this.displayIcon,
+    this.streamedVideo,
     this.basePrice,
     this.discountedPrice,
     this.discountPercent,
+    this.titleText,
   }) : super(key: key);
 
   @override
-  State<ItemDetailsScreen> createState() => _ItemDetailsScreenState();
+  State<ItemDetailsPage> createState() => _ItemDetailsPageState();
 }
 
-class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
+class _ItemDetailsPageState extends State<ItemDetailsPage> {
   ChewieController? _controller;
 
   @override
   void initState() {
-    _controller = ChewieController(
-      videoPlayerController: VideoPlayerController.network(
-        widget.streamedVideo,
-      ),
-      aspectRatio: 16 / 9,
-      autoPlay: false,
-      looping: false,
-      autoInitialize: true,
-    );
+    if (widget.streamedVideo != null && widget.streamedVideo!.isNotEmpty) {
+      _controller = ChewieController(
+        videoPlayerController: VideoPlayerController.network(
+          widget.streamedVideo!,
+        ),
+        aspectRatio: 16 / 9,
+        autoPlay: true,
+        looping: true,
+        showControlsOnInitialize: false,
+        autoInitialize: true,
+      );
+    }
     super.initState();
   }
 
@@ -64,7 +69,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                widget.streamedVideo.isNotEmpty
+                widget.streamedVideo != null && widget.streamedVideo!.isNotEmpty
                     ? SizedBox(
                         height: (MediaQuery.of(context).size.width) / 16 * 9,
                         child: Chewie(
@@ -74,10 +79,15 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                     : Container(
                         width: double.maxFinite,
                         padding: const EdgeInsets.all(16.0),
-                        child: Image.network(
-                          widget.displayIcon,
-                          fit: BoxFit.contain,
-                        ),
+                        child: widget.displayIcon != null
+                            ? Image.network(
+                                widget.displayIcon!,
+                                fit: BoxFit.contain,
+                              )
+                            : Text(
+                                widget.titleText ?? 'No image available',
+                                style: const TextStyle(fontSize: 20.0),
+                              ),
                       ),
                 Text(
                   widget.displayName,
