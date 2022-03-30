@@ -1,4 +1,6 @@
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common/sqlite_api.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common/utils/utils.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:path/path.dart';
@@ -33,10 +35,17 @@ class DatabaseHelper {
 
   // this opens the database (and creates it if it doesn't exist)
   _initDatabase() async {
+    sqfliteFfiInit();
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    var databaseFactory = databaseFactoryFfi;
     String path = join(documentsDirectory.path, _databaseName);
-    return await openDatabase(path,
-        version: _databaseVersion, onCreate: _onCreate);
+    return await databaseFactory.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: _databaseVersion,
+        onCreate: _onCreate,
+      ),
+    );
   }
 
   // SQL code to create the database table
@@ -76,8 +85,7 @@ class DatabaseHelper {
   // raw SQL commands. This method uses a raw query to give the row count.
   Future<int?> queryRowCount() async {
     Database db = await instance.database;
-    return Sqflite.firstIntValue(
-        await db.rawQuery('SELECT COUNT(*) FROM $usersTable'));
+    return firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM $usersTable'));
   }
 
   // We are assuming here that the id column in the map is set. The other

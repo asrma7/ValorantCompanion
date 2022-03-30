@@ -9,10 +9,25 @@ import 'package:valorant_companion/Screens/Pages/night_market_page.dart';
 import 'package:valorant_companion/Screens/Pages/stats_page.dart';
 import 'package:valorant_companion/Screens/Pages/store_page.dart';
 import 'package:valorant_companion/Screens/Pages/featured_page.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'Screens/home_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Must add this line.
+  await windowManager.ensureInitialized();
+
+  // Use it only after calling `hiddenWindowAtLaunch`
+  await windowManager.hide();
+  windowManager.waitUntilReadyToShow().then((_) async {
+    // Hide window title bar
+    await windowManager.setSize(const Size(350, 650));
+    await windowManager.setAlignment(Alignment.centerRight);
+    await windowManager.setResizable(false);
+    await windowManager.show();
+    await windowManager.setSkipTaskbar(false);
+  });
   runApp(const MyApp());
 }
 

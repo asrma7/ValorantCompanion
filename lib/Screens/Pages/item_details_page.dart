@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:chewie/chewie.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:valorant_companion/Library/src/url_manager.dart';
 import 'package:video_player/video_player.dart';
@@ -30,20 +33,23 @@ class ItemDetailsPage extends StatefulWidget {
 
 class _ItemDetailsPageState extends State<ItemDetailsPage> {
   ChewieController? _controller;
+  final bool _isWindows = Platform.isWindows;
 
   @override
   void initState() {
-    if (widget.streamedVideo != null && widget.streamedVideo!.isNotEmpty) {
-      _controller = ChewieController(
-        videoPlayerController: VideoPlayerController.network(
-          widget.streamedVideo!,
-        ),
-        aspectRatio: 16 / 9,
-        autoPlay: true,
-        looping: true,
-        showControlsOnInitialize: false,
-        autoInitialize: true,
-      );
+    if (!_isWindows) {
+      if (widget.streamedVideo != null && widget.streamedVideo!.isNotEmpty) {
+        _controller = ChewieController(
+          videoPlayerController: VideoPlayerController.network(
+            widget.streamedVideo!,
+          ),
+          aspectRatio: 16 / 9,
+          autoPlay: true,
+          looping: true,
+          showControlsOnInitialize: false,
+          autoInitialize: true,
+        );
+      }
     }
     super.initState();
   }
@@ -69,7 +75,9 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                widget.streamedVideo != null && widget.streamedVideo!.isNotEmpty
+                !_isWindows &&
+                        widget.streamedVideo != null &&
+                        widget.streamedVideo!.isNotEmpty
                     ? SizedBox(
                         height: (MediaQuery.of(context).size.width) / 16 * 9,
                         child: Chewie(
@@ -111,6 +119,22 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                     ? Text(
                         'Discount on bundle: \$${widget.discountPercent?.toStringAsFixed(2)}',
                         textAlign: TextAlign.center,
+                      )
+                    : Container(),
+                _isWindows &&
+                        widget.streamedVideo != null &&
+                        widget.streamedVideo!.isNotEmpty
+                    ? ElevatedButton(
+                        onPressed: () {
+                          Process.run("vlc", [widget.streamedVideo!]).then(
+                            (ProcessResult results) {
+                              if (kDebugMode) {
+                                print(results.stdout);
+                              }
+                            },
+                          );
+                        },
+                        child: const Text('Video'),
                       )
                     : Container(),
               ],
