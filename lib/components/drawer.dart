@@ -33,6 +33,12 @@ class _MyDrawerState extends State<MyDrawer> {
 
   @override
   Widget build(BuildContext context) {
+    ImageProvider _avatar;
+    if (user['playerCard'] != null && user['playerCard'] != '') {
+      _avatar = NetworkImage(user['playerCard']);
+    } else {
+      _avatar = const AssetImage('assets/images/default_avatar.png');
+    }
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -41,8 +47,8 @@ class _MyDrawerState extends State<MyDrawer> {
             accountName: Text('${user['display_name']}'),
             accountEmail: Text(
                 '${user['game_name']}#${user['tagLine']} (${user['region']})'),
-            currentAccountPicture: const CircleAvatar(
-              backgroundImage: AssetImage('assets/images/valorant_logo.png'),
+            currentAccountPicture: CircleAvatar(
+              backgroundImage: _avatar,
             ),
           ),
           ListTile(

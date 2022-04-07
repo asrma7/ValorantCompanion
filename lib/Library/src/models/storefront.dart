@@ -7,11 +7,13 @@ class Storefront extends ISerializable<Storefront> {
     this.featuredTheme,
     this.featuredBundle,
     this.skinsPanelLayout,
+    this.bonusStore,
   });
 
   final FeaturedTheme? featuredTheme;
   final FeaturedBundle? featuredBundle;
   final SkinsPanelLayout? skinsPanelLayout;
+  final BonusStore? bonusStore;
 
   factory Storefront.fromJson(String str) =>
       Storefront.fromMap(json.decode(str));
@@ -29,12 +31,16 @@ class Storefront extends ISerializable<Storefront> {
         skinsPanelLayout: json["SkinsPanelLayout"] == null
             ? null
             : SkinsPanelLayout.fromMap(json["SkinsPanelLayout"]),
+        bonusStore: json['BonusStore'] != null
+            ? BonusStore.fromMap(json['BonusStore'])
+            : null,
       );
 
   Map<String, dynamic> toMap() => {
         "FeaturedTheme": featuredTheme?.toMap(),
         "FeaturedBundle": featuredBundle?.toMap(),
         "SkinsPanelLayout": skinsPanelLayout?.toMap(),
+        "BonusStore": bonusStore?.toMap(),
       };
 
   @override
@@ -211,4 +217,140 @@ class SkinsPanelLayout {
         "SingleItemOffersRemainingDurationInSeconds":
             singleItemOffersRemainingDurationInSeconds,
       };
+}
+
+class BonusStore {
+  List<BonusStoreOffers>? bonusStoreOffers;
+  int? bonusStoreRemainingDurationInSeconds;
+
+  BonusStore(
+      {this.bonusStoreOffers, this.bonusStoreRemainingDurationInSeconds});
+
+  factory BonusStore.fromMap(Map<String, dynamic> json) => BonusStore(
+        bonusStoreOffers: List<BonusStoreOffers>.from(
+            json['BonusStoreOffers'].map((x) => BonusStoreOffers.fromMap(x)),
+            growable: false),
+        bonusStoreRemainingDurationInSeconds:
+            json["BonusStoreRemainingDurationInSeconds"] ?? 0,
+      );
+
+  Map<String, dynamic> toMap() => {
+        "BonusStoreOffers": bonusStoreOffers!.map((e) => e.toMap()).toList(),
+        "BonusStoreRemainingDurationInSeconds":
+            bonusStoreRemainingDurationInSeconds,
+      };
+
+  factory BonusStore.fromJson(String str) =>
+      BonusStore.fromMap(json.decode(str));
+
+  String toJson() => json.encode(toMap());
+}
+
+class BonusStoreOffers {
+  String? bonusOfferID;
+  Offer? offer;
+  double? discountPercent;
+  Cost? discountCosts;
+  bool? isSeen;
+
+  BonusStoreOffers(
+      {this.bonusOfferID,
+      this.offer,
+      this.discountPercent,
+      this.discountCosts,
+      this.isSeen});
+
+  factory BonusStoreOffers.fromMap(Map<String, dynamic> json) =>
+      BonusStoreOffers(
+        bonusOfferID: json["BonusOfferID"],
+        offer: json["Offer"] == null ? null : Offer.fromMap(json["Offer"]),
+        discountPercent: json["DiscountPercent"].toDouble(),
+        discountCosts: json["DiscountCosts"] == null
+            ? null
+            : Cost.fromMap(json["DiscountCosts"]),
+        isSeen: json["IsSeen"] ?? false,
+      );
+
+  Map<String, dynamic> toMap() {
+    return {
+      "BonusOfferID": bonusOfferID,
+      "Offer": offer?.toMap(),
+      "DiscountPercent": discountPercent,
+      "DiscountCosts": discountCosts?.toMap(),
+      "IsSeen": isSeen,
+    };
+  }
+}
+
+class Offer {
+  String? offerID;
+  bool? isDirectPurchase;
+  String? startDate;
+  Cost? cost;
+  List<Rewards>? rewards;
+
+  Offer(
+      {this.offerID,
+      this.isDirectPurchase,
+      this.startDate,
+      this.cost,
+      this.rewards});
+
+  factory Offer.fromMap(Map<String, dynamic> json) => Offer(
+        offerID: json["OfferID"],
+        isDirectPurchase: json["IsDirectPurchase"],
+        startDate: json["StartDate"],
+        cost: json["Cost"] == null ? null : Cost.fromMap(json["Cost"]),
+        rewards: List<Rewards>.from(
+            json["Rewards"].map((x) => Rewards.fromMap(x)),
+            growable: false),
+      );
+
+  Map<String, dynamic> toMap() {
+    return {
+      "OfferID": offerID,
+      "IsDirectPurchase": isDirectPurchase,
+      "StartDate": startDate,
+      "Cost": cost?.toMap(),
+      "Rewards": List<dynamic>.from(rewards!.map((x) => x.toMap())),
+    };
+  }
+}
+
+class Cost {
+  double? valorantPoints;
+
+  Cost({this.valorantPoints});
+
+  factory Cost.fromMap(Map<String, dynamic> json) => Cost(
+        valorantPoints: json["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"].toDouble(),
+      );
+
+  Map<String, dynamic> toMap() {
+    return {
+      "85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741": valorantPoints,
+    };
+  }
+}
+
+class Rewards {
+  String? itemTypeID;
+  String? itemID;
+  int? quantity;
+
+  Rewards({this.itemTypeID, this.itemID, this.quantity});
+
+  factory Rewards.fromMap(Map<String, dynamic> json) => Rewards(
+        itemTypeID: json["ItemTypeID"],
+        itemID: json["ItemID"],
+        quantity: json["Quantity"],
+      );
+
+  Map<String, dynamic> toMap() {
+    return {
+      "ItemTypeID": itemTypeID,
+      "ItemID": itemID,
+      "Quantity": quantity,
+    };
+  }
 }

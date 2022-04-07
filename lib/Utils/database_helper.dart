@@ -1,4 +1,4 @@
-import 'package:sqflite_common/sqlite_api.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common/utils/utils.dart';
 import 'package:path_provider/path_provider.dart';
@@ -19,6 +19,7 @@ class DatabaseHelper {
   static const columnSubject = 'subject';
   static const columnGameName = 'game_name';
   static const columnTagline = 'tagLine';
+  static const columnPlayerCard = 'playerCard';
 
   // make this a singleton class
   DatabaseHelper._privateConstructor();
@@ -39,6 +40,10 @@ class DatabaseHelper {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     var databaseFactory = databaseFactoryFfi;
     String path = join(documentsDirectory.path, _databaseName);
+    if (Platform.isAndroid || Platform.isIOS) {
+      return await openDatabase(path,
+          version: _databaseVersion, onCreate: _onCreate);
+    }
     return await databaseFactory.openDatabase(
       path,
       options: OpenDatabaseOptions(
@@ -59,7 +64,8 @@ class DatabaseHelper {
             $columnDisplayName TEXT NOT NULL,
             $columnSubject TEXT NOT NULL,
             $columnGameName TEXT NOT NULL,
-            $columnTagline TEXT NOT NULL
+            $columnTagline TEXT NOT NULL,
+            $columnPlayerCard TEXT NOT NULL
           )
           ''');
   }

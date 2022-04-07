@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:valorant_companion/Library/src/models/inventory.dart';
 import 'package:valorant_companion/Library/valorant_client.dart';
 
 import '../Library/src/models/user.dart';
@@ -197,6 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (resp) {
       User? user = await client.playerInterface.getPlayer();
+      Inventory? inventory = await client.playerInterface.getInventory();
       dbHelper.insert({
         'username': username,
         'password': password,
@@ -205,6 +207,9 @@ class _LoginScreenState extends State<LoginScreen> {
         'subject': user?.subject,
         'game_name': user?.gameName,
         'tagLine': user?.tagLine,
+        'playerCard': 'https://media.valorant-api.com/playercards/' +
+            inventory!.identity!.playerCardID! +
+            '/smallart.png',
       });
       return true;
     } else {

@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:valorant_companion/Screens/Pages/crosshair_page.dart';
 import 'package:valorant_companion/Screens/Pages/inventory_page.dart';
@@ -14,20 +17,22 @@ import 'package:window_manager/window_manager.dart';
 import 'Screens/home_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  // Must add this line.
-  await windowManager.ensureInitialized();
+  if (!kIsWeb && !Platform.isAndroid && !Platform.isIOS) {
+    WidgetsFlutterBinding.ensureInitialized();
+    // Must add this line.
+    await windowManager.ensureInitialized();
 
-  // Use it only after calling `hiddenWindowAtLaunch`
-  await windowManager.hide();
-  windowManager.waitUntilReadyToShow().then((_) async {
-    // Hide window title bar
-    await windowManager.setSize(const Size(350, 650));
-    await windowManager.setAlignment(Alignment.centerRight);
-    await windowManager.setResizable(false);
-    await windowManager.show();
-    await windowManager.setSkipTaskbar(false);
-  });
+    // Use it only after calling `hiddenWindowAtLaunch`
+    await windowManager.hide();
+    windowManager.waitUntilReadyToShow().then((_) async {
+      // Hide window title bar
+      await windowManager.setSize(const Size(350, 650));
+      await windowManager.setAlignment(Alignment.centerRight);
+      await windowManager.setResizable(false);
+      await windowManager.show();
+      await windowManager.setSkipTaskbar(false);
+    });
+  }
   runApp(const MyApp());
 }
 
