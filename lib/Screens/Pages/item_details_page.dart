@@ -14,8 +14,10 @@ class ItemDetailsPage extends StatefulWidget {
   final String? displayIcon, streamedVideo, titleText;
   final double? basePrice, discountedPrice, discountPercent;
   final ItemType itemType;
+  final StoreType storeType;
   const ItemDetailsPage({
     Key? key,
+    required this.storeType,
     required this.itemId,
     required this.itemType,
     required this.displayName,
@@ -42,6 +44,9 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
         _controller = ChewieController(
           videoPlayerController: VideoPlayerController.network(
             widget.streamedVideo!,
+            videoPlayerOptions: VideoPlayerOptions(
+              allowBackgroundPlayback: false,
+            ),
           ),
           aspectRatio: 16 / 9,
           autoPlay: true,
@@ -106,18 +111,75 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'Price: \$$price',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headline6!
-                      .copyWith(fontWeight: FontWeight.normal),
-                  textAlign: TextAlign.center,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("Price: "),
+                    Row(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(50.0),
+                            color: Colors.black54,
+                          ),
+                          child: Image.asset(
+                            'assets/images/valorantPoints.png',
+                            height: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 4.0),
+                        Text(
+                          price.round().toString(),
+                          style: TextStyle(
+                            fontWeight: FontWeight.normal,
+                            fontSize: 18.0,
+                            decoration: widget.discountPercent != null &&
+                                    widget.discountPercent != 0 &&
+                                    widget.storeType == StoreType.nightmarket
+                                ? TextDecoration.lineThrough
+                                : TextDecoration.none,
+                            decorationThickness: 2.0,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 4.0),
+                    widget.discountPercent != null &&
+                            widget.discountPercent != 0 &&
+                            widget.storeType == StoreType.nightmarket
+                        ? Row(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(50.0),
+                                  color: Colors.black54,
+                                ),
+                                child: Image.asset(
+                                  'assets/images/valorantPoints.png',
+                                  height: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 4.0),
+                              Text(
+                                widget.discountedPrice!.round().toString(),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.normal,
+                                  color: Colors.grey[800],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          )
+                        : Container(),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 widget.discountedPrice != null
                     ? Text(
-                        'Discount on bundle: \$${widget.discountPercent?.toStringAsFixed(2)}',
+                        widget.storeType == StoreType.featured
+                            ? 'Discount on bundle: ${widget.discountPercent ?? 0}%'
+                            : 'Discount: ${widget.discountPercent?.round()}%',
                         textAlign: TextAlign.center,
                       )
                     : Container(),

@@ -6,7 +6,7 @@ import 'dart:io';
 import 'package:path/path.dart';
 
 class DatabaseHelper {
-  static const _databaseName = "valocompanion.db";
+  static const _databaseName = "database.db";
   static const _databaseVersion = 1;
 
   static const usersTable = 'users';
@@ -20,6 +20,7 @@ class DatabaseHelper {
   static const columnGameName = 'game_name';
   static const columnTagline = 'tagLine';
   static const columnPlayerCard = 'playerCard';
+  static const columnisActive = 'isActive';
 
   // make this a singleton class
   DatabaseHelper._privateConstructor();
@@ -37,18 +38,23 @@ class DatabaseHelper {
   // this opens the database (and creates it if it doesn't exist)
   _initDatabase() async {
     sqfliteFfiInit();
-    Directory documentsDirectory = await getApplicationDocumentsDirectory();
+    Directory? documentsDirectory = await getApplicationDocumentsDirectory();
     var databaseFactory = databaseFactoryFfi;
     String path = join(documentsDirectory.path, _databaseName);
     if (Platform.isAndroid || Platform.isIOS) {
-      return await openDatabase(path,
-          version: _databaseVersion, onCreate: _onCreate);
+      return await openDatabase(
+        path,
+        version: _databaseVersion,
+        onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
+      );
     }
     return await databaseFactory.openDatabase(
       path,
       options: OpenDatabaseOptions(
         version: _databaseVersion,
         onCreate: _onCreate,
+        onUpgrade: _onUpgrade,
       ),
     );
   }
@@ -65,9 +71,17 @@ class DatabaseHelper {
             $columnSubject TEXT NOT NULL,
             $columnGameName TEXT NOT NULL,
             $columnTagline TEXT NOT NULL,
-            $columnPlayerCard TEXT NOT NULL
+            $columnPlayerCard TEXT NOT NULL,
+            $columnisActive INTEGER NOT NULL
           )
           ''');
+  }
+
+  Future _onUpgrade(Database db, int oldversion, int newversion) async {
+    await db.execute('''
+          DROP TABLE $usersTable
+          ''');
+    await _onCreate(db, newversion);
   }
 
   // Helper methods
@@ -77,21 +91,32 @@ class DatabaseHelper {
   // inserted row.
   Future<int> insert(Map<String, dynamic> row) async {
     Database db = await instance.database;
+    await db.rawUpdate('UPDATE $usersTable SET $columnisActive = 0');
     return await db.insert(usersTable, row);
+  }
+
+  Future<int> rawUpdate(String sql) async {
+    Database db = await instance.database;
+    return await db.rawUpdate(sql);
   }
 
   // All of the rows are returned as a list of maps, where each map is
   // a key-value list of columns.
   Future<List<Map<String, dynamic>>> queryAllRows() async {
     Database db = await instance.database;
-    return await db.query(usersTable);
+    var response = await db.query(usersTable);
+    return response;
   }
 
   // All of the methods (insert, query, update, delete) can also be done using
   // raw SQL commands. This method uses a raw query to give the row count.
-  Future<int?> queryRowCount() async {
+  Future<List<int?>> queryRowCount() async {
     Database db = await instance.database;
-    return firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM $usersTable'));
+    int? userCount =
+        firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM $usersTable'));
+    int? isActive = firstIntValue(await db.rawQuery(
+        'SELECT COUNT(*) FROM $usersTable WHERE $columnisActive = 1'));
+    return [userCount, isActive];
   }
 
   // We are assuming here that the id column in the map is set. The other
@@ -113,5 +138,11 @@ class DatabaseHelper {
   Future<int> deleteAll() async {
     Database db = await instance.database;
     return await db.delete(usersTable);
+  }
+
+  Future<int> logout() async {
+    Database db = await instance.database;
+    return await db
+        .rawDelete("DELETE FROM $usersTable WHERE $columnisActive = 1");
   }
 }

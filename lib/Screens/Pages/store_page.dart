@@ -97,6 +97,7 @@ class _StorePageState extends State<StorePage> {
                       Skin skin = skinList.skinList.singleWhere((element) =>
                           element.levels!.first.uuid == items[index]);
                       return StoreItem(
+                        storeType: StoreType.dailyoffer,
                         itemId: items[index],
                         displayIcon:
                             skin.levels!.first.displayIcon ?? skin.displayIcon,

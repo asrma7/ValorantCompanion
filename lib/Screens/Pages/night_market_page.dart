@@ -101,6 +101,7 @@ class _NightMarketPageState extends State<NightMarketPage> {
                           element.levels!.first.uuid ==
                           items[index].offer!.offerID);
                       return StoreItem(
+                        storeType: StoreType.nightmarket,
                         itemId: items[index].offer!.offerID!,
                         displayIcon:
                             skin.levels!.first.displayIcon ?? skin.displayIcon,

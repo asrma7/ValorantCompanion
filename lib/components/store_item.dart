@@ -10,8 +10,10 @@ class StoreItem extends StatefulWidget {
   final ContentTier? contentTier;
   final ItemType itemType;
   final double? basePrice, discountedPrice, discountPercent;
+  final StoreType storeType;
   const StoreItem({
     Key? key,
+    required this.storeType,
     required this.itemId,
     this.itemType = ItemType.weapon,
     this.displayIcon,
@@ -76,6 +78,7 @@ class _StoreItemState extends State<StoreItem> {
           context,
           MaterialPageRoute(
             builder: (context) => ItemDetailsPage(
+              storeType: widget.storeType,
               itemId: widget.itemId,
               itemType: widget.itemType,
               displayName: widget.displayName!,

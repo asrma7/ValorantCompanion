@@ -177,6 +177,7 @@ class _FeaturedPageState extends State<FeaturedPage> {
                           return Container();
                       }
                       return StoreItem(
+                        storeType: StoreType.featured,
                         itemId: itemId!,
                         itemType: itemType,
                         basePrice: item.basePrice,

@@ -26,3 +26,10 @@ enum ItemType {
   weapon,
   unknown,
 }
+
+enum StoreType {
+  featured,
+  dailyoffer,
+  nightmarket,
+  inventory,
+}
