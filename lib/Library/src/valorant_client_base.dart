@@ -227,7 +227,10 @@ class ValorantClient {
   Future<bool> _isTokenValid() async {
     String? expiry =
         await const FlutterSecureStorage().read(key: 'tokenExpiry');
-    if (DateTime.parse(expiry!).isBefore(DateTime.now())) {
+    if (expiry == null) {
+      return false;
+    }
+    if (DateTime.parse(expiry).isBefore(DateTime.now())) {
       return false;
     }
     return true;

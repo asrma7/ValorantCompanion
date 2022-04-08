@@ -17,7 +17,7 @@ import 'package:window_manager/window_manager.dart';
 import 'Screens/home_screen.dart';
 
 void main() async {
-  if (!kIsWeb && !Platform.isAndroid && !Platform.isIOS) {
+  if (!kIsWeb && !Platform.isAndroid && !Platform.isIOS && !Platform.isMacOS) {
     WidgetsFlutterBinding.ensureInitialized();
     // Must add this line.
     await windowManager.ensureInitialized();

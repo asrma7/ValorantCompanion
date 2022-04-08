@@ -31,6 +31,12 @@ class _LoginScreenState extends State<LoginScreen> {
     return WillPopScope(
       child: Scaffold(
         appBar: AppBar(
+          leading: widget.isBack
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.popAndPushNamed(context, '/home'),
+                )
+              : null,
           title: const Text('Valorant Companion'),
           centerTitle: true,
         ),
