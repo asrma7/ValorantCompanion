@@ -75,11 +75,23 @@ class DatabaseHelper {
             $columnisActive INTEGER NOT NULL
           )
           ''');
+    await db.execute('''
+          CREATE TABLE notifications (
+            $columnId INTEGER PRIMARY KEY,
+            titleText TEXT NOT NULL,
+            bodyText TEXT NOT NULL,
+            imageUrl TEXT NULL,
+            isRead INTEGER NOT NULL DEFAULT 0
+          )
+          ''');
   }
 
   Future _onUpgrade(Database db, int oldversion, int newversion) async {
     await db.execute('''
           DROP TABLE $usersTable
+          ''');
+    await db.execute('''
+          DROP TABLE notifications
           ''');
     await _onCreate(db, newversion);
   }
@@ -144,5 +156,32 @@ class DatabaseHelper {
     Database db = await instance.database;
     return await db
         .rawDelete("DELETE FROM $usersTable WHERE $columnisActive = 1");
+  }
+
+  Future<List<Map<String, dynamic>>> getNotifications() async {
+    Database db = await instance.database;
+    return db.query('notifications');
+  }
+
+  Future<int> insertNotification(Map<String, Object?> row) async {
+    Database db = await instance.database;
+    return await db.insert('notifications', row);
+  }
+
+  Future<int> deleteNotification(int id) async {
+    Database db = await instance.database;
+    return await db
+        .delete('notifications', where: '$columnId = ?', whereArgs: [id]);
+  }
+
+  Future<int> deleteAllNotifications() async {
+    Database db = await instance.database;
+    return await db.delete('notifications');
+  }
+
+  Future<int> seenNotification(int id) async {
+    Database db = await instance.database;
+    return await db.rawUpdate(
+        'UPDATE notifications SET isRead = 1 WHERE $columnId = ?', [id]);
   }
 }

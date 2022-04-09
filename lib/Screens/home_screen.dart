@@ -1,8 +1,15 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:overlay_support/overlay_support.dart';
+import 'package:valorant_companion/Utils/database_helper.dart';
 import 'package:valorant_companion/components/appbar.dart';
 
+import '../Model/push_notification.dart';
 import '../components/drawer.dart';
 import '../components/home_screen_card.dart';
+import 'Pages/notification_page.dart';
 
 class HomeScreen extends StatefulWidget {
   final String title;
@@ -14,10 +21,89 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  DatabaseHelper dbHelper = DatabaseHelper.instance;
+  int _totalNotifications = 0;
+  late final FirebaseMessaging _messaging;
+
+  @override
+  void initState() {
+    registerNotification();
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      PushNotification notification = PushNotification(
+        title: message.notification?.title,
+        body: message.notification?.body,
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => NotificationPage(
+            openNotification: notification,
+          ),
+        ),
+      );
+    });
+    super.initState();
+  }
+
+  void registerNotification() async {
+    await Firebase.initializeApp();
+
+    _messaging = FirebaseMessaging.instance;
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+    print(await _messaging.getToken());
+
+    NotificationSettings settings = await _messaging.requestPermission(
+      alert: true,
+      badge: true,
+      provisional: false,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+        // Parse the message received
+        PushNotification notification = PushNotification(
+          title: message.notification?.title,
+          body: message.notification?.body,
+        );
+        await dbHelper.insertNotification(
+          {
+            'titleText': message.notification?.title,
+            'bodyText': message.notification?.body,
+            'imageUrl': message.notification?.android?.imageUrl ??
+                message.notification?.apple?.imageUrl,
+            'isRead': false,
+          },
+        );
+
+        setState(() {
+          _totalNotifications++;
+        });
+
+        showSimpleNotification(
+          Text(notification.title!),
+          leading: Image.asset('assets/images/logo_rounded.png'),
+          subtitle: Text(notification.body!),
+          background: Colors.cyan.shade700,
+          duration: const Duration(seconds: 2),
+        );
+      });
+    } else {
+      if (kDebugMode) {
+        print('User declined or has not accepted permission');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppBar(appbarTitle: widget.title),
+      appBar: MyAppBar(
+        appbarTitle: widget.title,
+        notificationCount: _totalNotifications,
+        context: context,
+      ),
       body: GridView(
         padding: const EdgeInsets.all(10.0),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -98,6 +184,21 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       drawer: const MyDrawer(),
+    );
+  }
+}
+
+Future _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  if (kDebugMode) {
+    DatabaseHelper dbHelper = DatabaseHelper.instance;
+    await dbHelper.insertNotification(
+      {
+        'titleText': message.notification?.title,
+        'bodyText': message.notification?.body,
+        'imageUrl': message.notification?.android?.imageUrl ??
+            message.notification?.apple?.imageUrl,
+        'isRead': false,
+      },
     );
   }
 }

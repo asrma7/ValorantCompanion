@@ -23,8 +23,9 @@ dependencies:
   sqflite_common_ffi: ^2.1.0+2
   window_manager: ^0.2.0
   sqflite: ^2.0.2
+  firebase_core: ^1.14.0
   firebase_messaging: ^11.2.12
-  flutter_local_notifications: ^9.4.0
+  overlay_support: ^1.2.1
 
 dev_dependencies:
   flutter_test:
