@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:valorant_companion/Utils/database_helper.dart';
 import 'package:valorant_companion/components/appbar.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../Model/push_notification.dart';
 import '../components/drawer.dart';
@@ -19,6 +20,94 @@ class HomeScreen extends StatefulWidget {
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
+
+const String testDevice = 'D24424115C66CB97D367E594F5D2A05A';
+const int maxFailedLoadAttempts = 3;
+int currentAdLoadAttempt = 0;
+RequestConfiguration requestConfiguration = RequestConfiguration(
+  testDeviceIds: <String>[testDevice],
+);
+
+AppOpenAd? _appOpenAd;
+
+Future<void> _loadAppOpenAd() async {
+  await MobileAds.instance.initialize();
+  await MobileAds.instance.updateRequestConfiguration(requestConfiguration);
+  await AppOpenAd.load(
+    adUnitId: 'ca-app-pub-3940256099942544/3419835294',
+    request: const AdRequest(),
+    adLoadCallback: AppOpenAdLoadCallback(
+      onAdLoaded: (ad) {
+        if (kDebugMode) {
+          print('AppOpenAd loaded');
+        }
+        _appOpenAd = ad;
+      },
+      onAdFailedToLoad: (error) {
+        if (kDebugMode) {
+          print('AppOpenAd failed to load: $error');
+        }
+      },
+    ),
+    orientation: AppOpenAd.orientationPortrait,
+  );
+  _showAppOpenAd();
+}
+
+_showAppOpenAd() {
+  if (_appOpenAd == null) {
+    if (kDebugMode) {
+      print('AppOpenAd not loaded yet');
+    }
+    if (currentAdLoadAttempt < maxFailedLoadAttempts) {
+      currentAdLoadAttempt++;
+      _loadAppOpenAd();
+    }
+    return;
+  }
+  _appOpenAd!.fullScreenContentCallback = FullScreenContentCallback(
+    onAdShowedFullScreenContent: (ad) {
+      if (kDebugMode) {
+        print('AppOpenAd showed full screen');
+      }
+    },
+    onAdFailedToShowFullScreenContent: (ad, error) {
+      ad.dispose();
+      if (kDebugMode) {
+        print('AppOpenAd failed to show full screen: $error');
+      }
+      _appOpenAd = null;
+      _loadAppOpenAd();
+    },
+  );
+  _appOpenAd!.show();
+}
+
+// _showAppOpenAd() {
+//   if (_appOpenAd == null) {
+//     print('AppOpenAd not loaded yet');
+//     _loadAppOpenAd();
+//     return;
+//   }
+//   _appOpenAd!.fullScreenContentCallback = FullScreenContentCallback(
+//     onAdShowedFullScreenContent: (ad) {
+//       print('AppOpenAd showed full screen');
+//     },
+//     onAdFailedToShowFullScreenContent: (ad, error) {
+//       ad.dispose();
+//       print('AppOpenAd failed to show full screen: $error');
+//       _appOpenAd = null;
+//       _loadAppOpenAd();
+//     },
+//     onAdDismissedFullScreenContent: (ad){
+//       ad.dispose();
+//       print('AppOpenAd dismissed full screen');
+//       _appOpenAd = null;
+//       _loadAppOpenAd();
+//     },
+//   );
+//   _appOpenAd!.show();
+// }
 
 class _HomeScreenState extends State<HomeScreen> {
   DatabaseHelper dbHelper = DatabaseHelper.instance;
@@ -42,6 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     });
+    _loadAppOpenAd();
     super.initState();
   }
 
@@ -50,8 +140,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _messaging = FirebaseMessaging.instance;
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-    print(await _messaging.getToken());
 
     NotificationSettings settings = await _messaging.requestPermission(
       alert: true,
@@ -95,6 +183,8 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
   }
+
+  void createOpenAd() {}
 
   @override
   Widget build(BuildContext context) {
