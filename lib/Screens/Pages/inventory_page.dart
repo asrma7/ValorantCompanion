@@ -28,7 +28,7 @@ class _InventoryPageState extends State<InventoryPage> {
   Map<String, dynamic>? user;
 
   Future<bool> _loadUserData() async {
-    await dbHelper.queryAllRows().then((value) {
+    await dbHelper.queryActiveUser().then((value) {
       setState(() {
         user = value[0];
       });

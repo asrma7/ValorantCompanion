@@ -120,6 +120,12 @@ class DatabaseHelper {
     return response;
   }
 
+  Future<Map<String, dynamic>> queryActiveUser() async {
+    Database db = await instance.database;
+    var response = await db.query(usersTable, where: '$columnisActive = 1');
+    return response[0];
+  }
+
   // All of the methods (insert, query, update, delete) can also be done using
   // raw SQL commands. This method uses a raw query to give the row count.
   Future<List<int?>> queryRowCount() async {

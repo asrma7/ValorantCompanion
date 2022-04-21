@@ -25,9 +25,9 @@ class _NightMarketPageState extends State<NightMarketPage> {
   Map<String, dynamic>? user;
 
   Future<bool> _loadUserData() async {
-    await dbHelper.queryAllRows().then((value) {
+    await dbHelper.queryActiveUser().then((value) {
       setState(() {
-        user = value[0];
+        user = value;
       });
     });
     return true;

@@ -28,7 +28,7 @@ class _FeaturedPageState extends State<FeaturedPage> {
   Map<String, dynamic>? user;
 
   Future<bool> _loadUserData() async {
-    await dbHelper.queryAllRows().then((value) {
+    await dbHelper.queryActiveUser().then((value) {
       setState(() {
         user = value[0];
       });
