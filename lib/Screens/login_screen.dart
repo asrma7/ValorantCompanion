@@ -201,14 +201,14 @@ class _LoginScreenState extends State<LoginScreen> {
       shouldPersistSession: false,
       callback: Callback(
         onError: (String error) {
-          if (kDebugMode) {
+          setState(() {
             _errorMessage = "Error: $error";
-          }
+          });
         },
         onRequestError: (DioError error) {
-          if (kDebugMode) {
+          setState(() {
             _errorMessage = "Error: ${error.message}";
-          }
+          });
         },
       ),
     );
