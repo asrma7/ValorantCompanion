@@ -16,7 +16,7 @@ class _CrosshairPageState extends State<CrosshairPage> {
         title: Text(widget.title),
       ),
       body: const Center(
-        child: Text('Crosshair'),
+        child: Text('Crosshair not implemented yet'),
       ),
     );
   }

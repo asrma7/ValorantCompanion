@@ -16,7 +16,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         title: Text(widget.title),
       ),
       body: const Center(
-        child: Text('Leaderboard'),
+        child: Text('Leaderboard not implemented yet'),
       ),
     );
   }

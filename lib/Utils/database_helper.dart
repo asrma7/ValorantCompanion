@@ -7,7 +7,7 @@ import 'package:path/path.dart';
 
 class DatabaseHelper {
   static const _databaseName = "database.db";
-  static const _databaseVersion = 1;
+  static const _databaseVersion = 2;
 
   static const usersTable = 'users';
 
@@ -21,6 +21,7 @@ class DatabaseHelper {
   static const columnTagline = 'tagLine';
   static const columnPlayerCard = 'playerCard';
   static const columnisActive = 'isActive';
+  static const columnhasError = 'hasError';
 
   // make this a singleton class
   DatabaseHelper._privateConstructor();
@@ -72,7 +73,8 @@ class DatabaseHelper {
             $columnGameName TEXT NOT NULL,
             $columnTagline TEXT NOT NULL,
             $columnPlayerCard TEXT NOT NULL,
-            $columnisActive INTEGER NOT NULL
+            $columnisActive INTEGER NOT NULL,
+            $columnhasError INTEGER NOT NULL DEFAULT 0
           )
           ''');
     await db.execute('''

@@ -78,6 +78,11 @@ class _NightMarketPageState extends State<NightMarketPage> {
         future: getStoreOffers(),
         builder: (context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
+            if (snapshot.data[2].bonusStore == null) {
+              return const Center(
+                child: Text('Night Market is not available'),
+              );
+            }
             Skins skinList = snapshot.data[0]!;
             ContentTiers contentTiersList = snapshot.data[1]!;
             Storefront response = snapshot.data[2]!;

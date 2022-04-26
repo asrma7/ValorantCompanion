@@ -16,7 +16,7 @@ class _StatsPageState extends State<StatsPage> {
         title: Text(widget.title),
       ),
       body: const Center(
-        child: Text('Stats'),
+        child: Text('Stats not implemented yet'),
       ),
     );
   }

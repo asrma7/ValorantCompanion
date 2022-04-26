@@ -30,7 +30,7 @@ class _FeaturedPageState extends State<FeaturedPage> {
   Future<bool> _loadUserData() async {
     await dbHelper.queryActiveUser().then((value) {
       setState(() {
-        user = value[0];
+        user = value;
       });
     });
     return true;
