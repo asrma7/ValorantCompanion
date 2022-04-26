@@ -34,12 +34,13 @@ Future<void> _loadAppOpenAd() async {
   await MobileAds.instance.initialize();
   await MobileAds.instance.updateRequestConfiguration(requestConfiguration);
   await AppOpenAd.load(
-    adUnitId: 'ca-app-pub-3940256099942544/3419835294',
+    adUnitId: 'ca-app-pub-7639794239002665/7993201166',
     request: const AdRequest(),
     adLoadCallback: AppOpenAdLoadCallback(
       onAdLoaded: (ad) {
         if (kDebugMode) {
           print('AppOpenAd loaded');
+          _showAppOpenAd();
         }
         _appOpenAd = ad;
       },
@@ -51,7 +52,6 @@ Future<void> _loadAppOpenAd() async {
     ),
     orientation: AppOpenAd.orientationPortrait,
   );
-  _showAppOpenAd();
 }
 
 _showAppOpenAd() {

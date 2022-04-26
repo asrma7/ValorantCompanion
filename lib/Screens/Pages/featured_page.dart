@@ -49,6 +49,7 @@ class _FeaturedPageState extends State<FeaturedPage> {
       shouldPersistSession: false,
       callback: Callback(
         onError: (String error) {
+          //TODO: Handle error
           if (kDebugMode) {
             print(error);
           }
