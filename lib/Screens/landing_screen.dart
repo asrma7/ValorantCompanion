@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../Library/valorant_client.dart';
 import '../Utils/database_helper.dart';
 import '../Utils/helpers.dart';
+import 'update_password.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({Key? key}) : super(key: key);
@@ -83,22 +83,33 @@ class _LandingScreenState extends State<LandingScreen> {
                                       'assets/images/valorant_logo.png'),
                               title: Text(
                                   '${users[index]['game_name']}#${users[index]['tagLine']} (${users[index]['region']})'),
+                              trailing: users[index]['hasError'] == 1
+                                  ? const Icon(Icons.error, color: Colors.red)
+                                  : null,
                               onTap: () async {
-                                setState(() {
-                                  _isLoading = true;
-                                });
-                                const FlutterSecureStorage().deleteAll();
-                                ValorantClient client = ValorantClient(
-                                  UserDetails(
-                                    userName: users[index]['username'],
-                                    password: users[index]['password'],
-                                    region:
-                                        stringToRegion(users[index]['region'])!,
-                                  ),
-                                  shouldPersistSession: false,
-                                  callback: Callback(
-                                    onError: (String error) {
-                                      if (kDebugMode) {
+                                if (users[index]['hasError'] == 1) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => UpdateUserPassword(
+                                          user: users[index]),
+                                    ),
+                                  ).then((value) => setState(() {}));
+                                } else {
+                                  setState(() {
+                                    _isLoading = true;
+                                  });
+                                  const FlutterSecureStorage().deleteAll();
+                                  ValorantClient client = ValorantClient(
+                                    UserDetails(
+                                      userName: users[index]['username'],
+                                      password: users[index]['password'],
+                                      region: stringToRegion(
+                                          users[index]['region'])!,
+                                    ),
+                                    shouldPersistSession: false,
+                                    callback: Callback(
+                                      onError: (String error) {
                                         SnackBar(
                                           content: Text(
                                             error,
@@ -108,10 +119,8 @@ class _LandingScreenState extends State<LandingScreen> {
                                           ),
                                           backgroundColor: Colors.red,
                                         );
-                                      }
-                                    },
-                                    onRequestError: (DioError error) {
-                                      if (kDebugMode) {
+                                      },
+                                      onRequestError: (DioError error) {
                                         SnackBar(
                                           content: Text(
                                             error.message,
@@ -121,23 +130,30 @@ class _LandingScreenState extends State<LandingScreen> {
                                           ),
                                           backgroundColor: Colors.red,
                                         );
-                                      }
-                                    },
-                                  ),
-                                );
-                                bool resp = await client.init();
-                                setState(() {
-                                  _isLoading = false;
-                                });
-                                if (resp) {
-                                  await dbHelper!.rawUpdate(
-                                      'UPDATE users SET isActive = 0');
-                                  await dbHelper!.update({
-                                    'id': users[index]['id'],
-                                    'isActive': 1,
+                                      },
+                                    ),
+                                  );
+                                  bool resp = await client.init();
+                                  setState(() {
+                                    _isLoading = false;
                                   });
-                                  Navigator.of(_scaffoldKey.currentContext!)
-                                      .popAndPushNamed('/home');
+                                  if (resp) {
+                                    await dbHelper!.rawUpdate(
+                                        'UPDATE users SET isActive = 0');
+                                    await dbHelper!.update({
+                                      'id': users[index]['id'],
+                                      'isActive': 1,
+                                    });
+                                    Navigator.of(_scaffoldKey.currentContext!)
+                                        .popAndPushNamed('/home');
+                                  } else {
+                                    await dbHelper!.rawUpdate(
+                                        'UPDATE users SET isActive = 0');
+                                    await dbHelper!.update({
+                                      'id': users[index]['id'],
+                                      'hasError': 1,
+                                    });
+                                  }
                                 }
                               },
                             ),
