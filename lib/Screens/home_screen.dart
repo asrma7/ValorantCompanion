@@ -21,20 +21,15 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-const String testDevice = 'D24424115C66CB97D367E594F5D2A05A';
 const int maxFailedLoadAttempts = 3;
 int currentAdLoadAttempt = 0;
-RequestConfiguration requestConfiguration = RequestConfiguration(
-  testDeviceIds: <String>[testDevice],
-);
 
 AppOpenAd? _appOpenAd;
 
 Future<void> _loadAppOpenAd() async {
   await MobileAds.instance.initialize();
-  await MobileAds.instance.updateRequestConfiguration(requestConfiguration);
   await AppOpenAd.load(
-    adUnitId: 'ca-app-pub-7639794239002665/7993201166',
+    adUnitId: 'ca-app-pub-7639794239002665/9042686238',
     request: const AdRequest(),
     adLoadCallback: AppOpenAdLoadCallback(
       onAdLoaded: (ad) {

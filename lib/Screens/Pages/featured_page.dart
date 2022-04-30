@@ -24,6 +24,7 @@ class FeaturedPage extends StatefulWidget {
 
 class _FeaturedPageState extends State<FeaturedPage> {
   final dbHelper = DatabaseHelper.instance;
+  bool _clientHasError = false;
 
   Map<String, dynamic>? user;
 
@@ -47,19 +48,23 @@ class _FeaturedPageState extends State<FeaturedPage> {
         region: stringToRegion(user!['region'])!,
       ),
       shouldPersistSession: false,
-      callback: Callback(
-        onError: (String error) {
-          //TODO: Handle error
+      callback: Callback(onError: (String error) {
+        _clientHasError = true;
+        if (error == "Authentication Failed.") {
+          dbHelper.activeUserHasError();
+          Navigator.pop(context);
+          Navigator.popAndPushNamed(context, '/');
+        } else {
           if (kDebugMode) {
             print(error);
           }
-        },
-        onRequestError: (DioError error) {
-          if (kDebugMode) {
-            print(error.message);
-          }
-        },
-      ),
+        }
+      }, onRequestError: (DioError error) {
+        _clientHasError = true;
+        if (kDebugMode) {
+          print(error);
+        }
+      }),
     );
     await client.init();
     var futures = <Future>[
@@ -87,7 +92,7 @@ class _FeaturedPageState extends State<FeaturedPage> {
       body: FutureBuilder(
         future: getStoreOffers(),
         builder: (context, AsyncSnapshot snapshot) {
-          if (snapshot.hasData) {
+          if (snapshot.hasData && !_clientHasError) {
             Skins skinList = snapshot.data[0];
             Spray sprayList = snapshot.data[1];
             PlayerCards playerCardList = snapshot.data[2];
@@ -195,7 +200,7 @@ class _FeaturedPageState extends State<FeaturedPage> {
                 ),
               ],
             );
-          } else if (snapshot.hasError) {
+          } else if (snapshot.hasError || _clientHasError) {
             return Container();
           } else {
             return const Center(

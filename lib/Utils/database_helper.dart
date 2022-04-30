@@ -166,6 +166,12 @@ class DatabaseHelper {
         .rawDelete("DELETE FROM $usersTable WHERE $columnisActive = 1");
   }
 
+  Future<int> activeUserHasError() async {
+    Database db = await instance.database;
+    return await db.rawUpdate(
+        "UPDATE $usersTable SET $columnhasError = 1, $columnisActive = 0 WHERE $columnisActive = 1");
+  }
+
   Future<List<Map<String, dynamic>>> getNotifications() async {
     Database db = await instance.database;
     return db.query('notifications');

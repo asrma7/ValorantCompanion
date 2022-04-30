@@ -25,6 +25,8 @@ class InventoryPage extends StatefulWidget {
 class _InventoryPageState extends State<InventoryPage> {
   final dbHelper = DatabaseHelper.instance;
 
+  bool _clientHasError = false;
+
   Map<String, dynamic>? user;
 
   Future<bool> _loadUserData() async {
@@ -49,12 +51,19 @@ class _InventoryPageState extends State<InventoryPage> {
       shouldPersistSession: false,
       callback: Callback(
         onError: (String error) {
-          //TODO: Handle error
-          if (kDebugMode) {
-            print(error);
+          _clientHasError = true;
+          if (error == "Authentication Failed.") {
+            dbHelper.activeUserHasError();
+            Navigator.pop(context);
+            Navigator.popAndPushNamed(context, '/');
+          } else {
+            if (kDebugMode) {
+              print(error);
+            }
           }
         },
         onRequestError: (DioError error) {
+          _clientHasError = true;
           if (kDebugMode) {
             print(error.message);
           }
@@ -86,7 +95,7 @@ class _InventoryPageState extends State<InventoryPage> {
       body: FutureBuilder(
           future: getPlayerInventory(),
           builder: (context, AsyncSnapshot snapshot) {
-            if (snapshot.hasData) {
+            if (snapshot.hasData && !_clientHasError) {
               Weapons weaponList = snapshot.data![0]!;
               Spray sprayList = snapshot.data![1]!;
               PlayerCards playerCards = snapshot.data![2]!;
@@ -136,7 +145,7 @@ class _InventoryPageState extends State<InventoryPage> {
                 ),
               );
             }
-            if (snapshot.hasError) {
+            if (snapshot.hasError || _clientHasError) {
               return const Center(
                 child: Text("Error"),
               );

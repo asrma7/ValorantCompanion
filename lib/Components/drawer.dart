@@ -17,6 +17,7 @@ class _MyDrawerState extends State<MyDrawer> {
   bool showUserDetails = false;
   bool _isLoading = false;
   final dbHelper = DatabaseHelper.instance;
+  BuildContext? _context;
 
   Future<Map<String, dynamic>?> loadUserData() async {
     var value = await dbHelper.queryAllRows();
@@ -31,6 +32,12 @@ class _MyDrawerState extends State<MyDrawer> {
       Navigator.pushNamed(context, '/');
     }
     return null;
+  }
+
+  @override
+  void initState() {
+    _context = context;
+    super.initState();
   }
 
   @override
@@ -98,6 +105,12 @@ class _MyDrawerState extends State<MyDrawer> {
                     : Image.asset('assets/images/valorant_logo.png'),
                 title: Text(
                     '${otherAccountUser['game_name']}#${otherAccountUser['tagLine']} (${otherAccountUser['region']})'),
+                trailing: otherAccountUser['hasError'] == 1
+                    ? const Icon(
+                        Icons.error,
+                        color: Colors.red,
+                      )
+                    : null,
                 onTap: () async {
                   setState(() {
                     _isLoading = true;
@@ -142,6 +155,19 @@ class _MyDrawerState extends State<MyDrawer> {
                       'id': users[index]['id'],
                       'isActive': 1,
                     });
+                  } else {
+                    await dbHelper.rawUpdate('UPDATE users SET isActive = 0');
+                    await dbHelper.update({
+                      'id': users[index]['id'],
+                      'hasError': 1,
+                    });
+
+                    setState(() {
+                      _isLoading = false;
+                    });
+                    if (Navigator.canPop(_context!)) {
+                      Navigator.pop(_context!);
+                    }
                   }
                   setState(() {
                     _isLoading = false;
@@ -164,9 +190,9 @@ class _MyDrawerState extends State<MyDrawer> {
             ),
           ),
           onTap: () {
-            Navigator.pop(context);
+            Navigator.pop(_context!);
             Navigator.pushReplacement(
-              context,
+              _context!,
               MaterialPageRoute(
                 builder: (context) => const LoginScreen(
                   isBack: true,
