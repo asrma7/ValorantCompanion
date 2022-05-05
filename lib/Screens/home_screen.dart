@@ -8,6 +8,7 @@ import 'package:valorant_companion/components/appbar.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../Model/push_notification.dart';
+import '../Utils/ad_helper.dart';
 import '../components/drawer.dart';
 import '../components/home_screen_card.dart';
 import 'Pages/notification_page.dart';
@@ -26,22 +27,25 @@ int currentAdLoadAttempt = 0;
 
 AppOpenAd? _appOpenAd;
 
-Future<void> _loadAppOpenAd() async {
+Future<void> _loadAppOpenAd(context) async {
   await MobileAds.instance.initialize();
+  await MobileAds.instance.updateRequestConfiguration(
+      RequestConfiguration(testDeviceIds: <String>[]));
   await AppOpenAd.load(
-    adUnitId: 'ca-app-pub-7639794239002665/9042686238',
+    adUnitId: AdHelper.appOpenAdUnitId,
     request: const AdRequest(),
     adLoadCallback: AppOpenAdLoadCallback(
       onAdLoaded: (ad) {
         if (kDebugMode) {
           print('AppOpenAd loaded');
-          _showAppOpenAd();
         }
+        _showAppOpenAd(context);
         _appOpenAd = ad;
       },
       onAdFailedToLoad: (error) {
         if (kDebugMode) {
           print('AppOpenAd failed to load: $error');
+          print(error.message);
         }
       },
     ),
@@ -49,14 +53,14 @@ Future<void> _loadAppOpenAd() async {
   );
 }
 
-_showAppOpenAd() {
+_showAppOpenAd(context) {
   if (_appOpenAd == null) {
     if (kDebugMode) {
       print('AppOpenAd not loaded yet');
     }
     if (currentAdLoadAttempt < maxFailedLoadAttempts) {
       currentAdLoadAttempt++;
-      _loadAppOpenAd();
+      _loadAppOpenAd(context);
     }
     return;
   }
@@ -72,7 +76,7 @@ _showAppOpenAd() {
         print('AppOpenAd failed to show full screen: $error');
       }
       _appOpenAd = null;
-      _loadAppOpenAd();
+      _loadAppOpenAd(context);
     },
   );
   _appOpenAd!.show();
@@ -126,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     });
-    _loadAppOpenAd();
+    _loadAppOpenAd(context);
     super.initState();
   }
 
