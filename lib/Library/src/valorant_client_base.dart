@@ -94,7 +94,7 @@ class ValorantClient {
     _cookieJar = shouldPersistSession ? PersistCookieJar() : CookieJar();
     _client.interceptors.add(CookieManager(_cookieJar));
     if (await _isLoggedIn() && await _isTokenValid()) {
-      Map<String, dynamic> _authHeaders = {
+      Map<String, dynamic> authHeaders = {
         "Content-Type": "application/json",
         "authorization":
             "Bearer ${await const FlutterSecureStorage().read(key: 'accessToken')}",
@@ -105,7 +105,7 @@ class ValorantClient {
         ClientConstants.clientPlatformHeaderKey:
             ClientConstants.clientPlatformHeaderValue,
       };
-      _client.options.headers.addAll(_authHeaders);
+      _client.options.headers.addAll(authHeaders);
       String? puuid = await const FlutterSecureStorage().read(key: 'userPuuid');
       if (puuid != null) {
         _rsoHandler._userPuuid = puuid;

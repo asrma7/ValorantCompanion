@@ -1,7 +1,10 @@
 import 'dart:io';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:valorant_companion/Screens/Pages/crosshair_page.dart';
 import 'package:valorant_companion/Screens/Pages/inventory_page.dart';
@@ -13,12 +16,50 @@ import 'package:valorant_companion/Screens/Pages/night_market_page.dart';
 import 'package:valorant_companion/Screens/Pages/stats_page.dart';
 import 'package:valorant_companion/Screens/Pages/store_page.dart';
 import 'package:valorant_companion/Screens/Pages/featured_page.dart';
+import 'package:valorant_companion/Utils/database_helper.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'Screens/Pages/notification_page.dart';
 import 'Screens/home_screen.dart';
+
+/// Create a [AndroidNotificationChannel] for heads up notifications
+late AndroidNotificationChannel channel;
+
+/// Initialize the [FlutterLocalNotificationsPlugin] package.
+late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  if (!kIsWeb) {
+    channel = const AndroidNotificationChannel(
+      'high_importance_channel', // id
+      'High Importance Notifications', // title
+      description:
+          'This channel is used for important notifications.', // description
+      importance: Importance.high,
+    );
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+    /// Create an Android Notification Channel.
+    ///
+    /// We use this channel in the `AndroidManifest.xml` file to override the
+    /// default FCM channel to enable heads up notifications.
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+
+    /// Update the iOS foreground notification presentation options to allow
+    /// heads up notifications.
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+  }
   if (!kIsWeb && !Platform.isAndroid && !Platform.isIOS && !Platform.isMacOS) {
     await windowManager.ensureInitialized();
     await windowManager.hide();
@@ -30,11 +71,12 @@ void main() async {
       await windowManager.setSkipTaskbar(false);
     });
   }
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  MyApp({Key? key}) : super(key: key);
+  final DatabaseHelper dbHelper = DatabaseHelper.instance;
   @override
   Widget build(BuildContext context) {
     return OverlaySupport(
@@ -60,9 +102,24 @@ class MyApp extends StatelessWidget {
               const LeaderboardPage(title: "Leaderboard"),
           '/crosshair': (context) =>
               const CrosshairPage(title: "Crosshair Presets"),
+          '/notifications': (context) => const NotificationPage(),
         },
         debugShowCheckedModeBanner: false,
       ),
     );
+  }
+}
+
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  DatabaseHelper dbHelper = DatabaseHelper.instance;
+  if (message.notification != null) {
+    String? imageUrl = message.notification!.android?.imageUrl ??
+        message.notification!.apple?.imageUrl;
+    dbHelper.insertNotification({
+      'titleText': message.notification!.title,
+      'bodyText': message.notification!.body,
+      'imageUrl': imageUrl,
+    });
   }
 }

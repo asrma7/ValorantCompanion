@@ -1,8 +1,10 @@
 class PushNotification {
   PushNotification({
-    this.title,
-    this.body,
+    required this.title,
+    required this.body,
+    this.imageUrl,
   });
-  String? title;
-  String? body;
+  String title;
+  String body;
+  String? imageUrl;
 }

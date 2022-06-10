@@ -21,17 +21,8 @@ class _MyDrawerState extends State<MyDrawer> {
 
   Future<Map<String, dynamic>?> loadUserData() async {
     var value = await dbHelper.queryAllRows();
-    try {
-      var user = value.singleWhere((element) => element['isActive'] == 1);
-      return {'users': value, 'user': user};
-    } catch (e) {
-      Navigator.pop(context);
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
-      Navigator.pushNamed(context, '/');
-    }
-    return null;
+    var user = value.singleWhere((element) => element['isActive'] == 1);
+    return {'users': value, 'user': user};
   }
 
   @override
@@ -47,7 +38,7 @@ class _MyDrawerState extends State<MyDrawer> {
         child: CircularProgressIndicator(),
       );
     }
-    ImageProvider _avatar;
+    ImageProvider avatar;
     return Drawer(
       child: FutureBuilder(
           future: loadUserData(),
@@ -56,9 +47,9 @@ class _MyDrawerState extends State<MyDrawer> {
               var users = snapshot.data['users'];
               var user = snapshot.data['user'];
               if (user['playerCard'] != null && user['playerCard'] != '') {
-                _avatar = NetworkImage(user['playerCard']);
+                avatar = NetworkImage(user['playerCard']);
               } else {
-                _avatar = const AssetImage('assets/images/valorant_logo.png');
+                avatar = const AssetImage('assets/images/valorant_logo.png');
               }
               return Column(
                 children: <Widget>[
@@ -67,7 +58,7 @@ class _MyDrawerState extends State<MyDrawer> {
                     accountEmail: Text(
                         '${user['game_name']}#${user['tagLine']} (${user['region']})'),
                     currentAccountPicture: CircleAvatar(
-                      backgroundImage: _avatar,
+                      backgroundImage: avatar,
                     ),
                     onDetailsPressed: () {
                       setState(() {
@@ -82,6 +73,10 @@ class _MyDrawerState extends State<MyDrawer> {
                   )
                 ],
               );
+            }
+            if (snapshot.hasError) {
+              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+              return Container();
             }
             return Container();
           }),

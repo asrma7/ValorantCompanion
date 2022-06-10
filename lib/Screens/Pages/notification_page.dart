@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:valorant_companion/Model/push_notification.dart';
 
+import '../../Components/notification_lists.dart';
 import '../../Utils/database_helper.dart';
 
 class NotificationPage extends StatefulWidget {
-  final PushNotification? openNotification;
-  const NotificationPage({Key? key, this.openNotification}) : super(key: key);
+  const NotificationPage({Key? key}) : super(key: key);
 
   @override
   State<NotificationPage> createState() => _NotificationPageState();
@@ -14,26 +14,23 @@ class NotificationPage extends StatefulWidget {
 class _NotificationPageState extends State<NotificationPage> {
   DatabaseHelper dbHelper = DatabaseHelper.instance;
   @override
-  void initState() {
-    if (widget.openNotification != null) {
-      showNotification(
-          widget.openNotification!.title!, widget.openNotification!.body!);
-    }
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final PushNotification? notification =
+        ModalRoute.of(context)?.settings.arguments as PushNotification?;
+    if (notification != null) {
+      String? imageUrl = notification.imageUrl;
+      showNotification(notification.title, notification.body, imageUrl);
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
         actions: [
-          TextButton(
+          IconButton(
             onPressed: () async {
               await dbHelper.deleteAllNotifications();
               setState(() {});
             },
-            child: const Text('clear'),
+            icon: const Icon(Icons.delete),
           ),
         ],
       ),
@@ -42,25 +39,8 @@ class _NotificationPageState extends State<NotificationPage> {
         builder: (context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
             List<Map<String, dynamic>> notifications = snapshot.data;
-            return ListView.separated(
-              itemCount: notifications.length,
-              itemBuilder: (context, index) {
-                return Dismissible(
-                  key: Key(notifications[index]['id'].toString()),
-                  child: ListTile(
-                    title: Text(snapshot.data![index]['titleText']),
-                    subtitle: Text(snapshot.data![index]['bodyText']),
-                  ),
-                  onDismissed: (direction) async {
-                    await dbHelper
-                        .deleteNotification(snapshot.data![index]['id']);
-                    setState(() {});
-                  },
-                );
-              },
-              separatorBuilder: (BuildContext context, int index) {
-                return const Divider();
-              },
+            return NotificationList(
+              notifications: notifications,
             );
           }
           if (snapshot.hasError) {
@@ -72,10 +52,21 @@ class _NotificationPageState extends State<NotificationPage> {
     );
   }
 
-  showNotification(String title, String body) {
+  showNotification(String title, String body, String? imageUrl) {
     AlertDialog dialog = AlertDialog(
       title: Text(title),
-      content: Text(body),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          imageUrl != null
+              ? Image.network(
+                  imageUrl,
+                  height: 150,
+                )
+              : Container(),
+          Text(body),
+        ],
+      ),
       actions: <Widget>[
         ElevatedButton(
           child: const Text('OK'),

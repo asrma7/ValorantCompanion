@@ -12,7 +12,7 @@ class UpdateUserPassword extends StatefulWidget {
   final Map<String, dynamic> user;
 
   @override
-  _UpdateUserPasswordState createState() => _UpdateUserPasswordState();
+  State<UpdateUserPassword> createState() => _UpdateUserPasswordState();
 }
 
 class _UpdateUserPasswordState extends State<UpdateUserPassword> {
@@ -82,20 +82,6 @@ class _UpdateUserPasswordState extends State<UpdateUserPassword> {
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: _handlingForm
-                        ? const [
-                            Text('Login'),
-                            SizedBox(width: 8),
-                            CupertinoActivityIndicator(
-                              color: Colors.white,
-                            )
-                          ]
-                        : const [
-                            Text('Login'),
-                          ],
-                  ),
                   onPressed: _handlingForm
                       ? null
                       : () {
@@ -114,10 +100,23 @@ class _UpdateUserPasswordState extends State<UpdateUserPassword> {
                             }
                           });
                         },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: _handlingForm
+                        ? const [
+                            Text('Login'),
+                            SizedBox(width: 8),
+                            CupertinoActivityIndicator(
+                              color: Colors.white,
+                            )
+                          ]
+                        : const [
+                            Text('Login'),
+                          ],
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  child: const Text('RemoveAccount'),
                   onPressed: _handlingForm
                       ? null
                       : () {
@@ -127,6 +126,7 @@ class _UpdateUserPasswordState extends State<UpdateUserPassword> {
                             }
                           });
                         },
+                  child: const Text('RemoveAccount'),
                 ),
               ],
             ),

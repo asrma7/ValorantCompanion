@@ -33,9 +33,9 @@ class _HomeScreenCardState extends State<HomeScreenCard> {
         duration: const Duration(milliseconds: 800),
         transitionBuilder: __transitionBuilder,
         layoutBuilder: (widget, list) => Stack(children: [widget!, ...list]),
-        child: _showFrontSide ? _buildFront() : _buildRear(),
         switchInCurve: Curves.easeInBack,
         switchOutCurve: Curves.easeInBack.flipped,
+        child: _showFrontSide ? _buildFront() : _buildRear(),
       ),
       onTap: () {
         if (widget.onTap != null) {
@@ -118,7 +118,10 @@ class _HomeScreenCardState extends State<HomeScreenCard> {
           ),
         ),
         Positioned(
+          top: 0.0,
+          right: 0.0,
           child: GestureDetector(
+            onTap: _switchCard,
             child: Container(
               padding: const EdgeInsets.all(10.0),
               child: const Icon(
@@ -126,10 +129,7 @@ class _HomeScreenCardState extends State<HomeScreenCard> {
                 color: Colors.white,
               ),
             ),
-            onTap: _switchCard,
           ),
-          top: 0.0,
-          right: 0.0,
         )
       ],
     );
@@ -153,8 +153,8 @@ class _HomeScreenCardState extends State<HomeScreenCard> {
             isUnder ? min(rotateAnim.value, pi / 2) : rotateAnim.value;
         return Transform(
           transform: Matrix4.rotationY(value)..setEntry(3, 0, tilt),
-          child: widget,
           alignment: Alignment.center,
+          child: widget,
         );
       },
     );

@@ -174,7 +174,14 @@ class DatabaseHelper {
 
   Future<List<Map<String, dynamic>>> getNotifications() async {
     Database db = await instance.database;
-    return db.query('notifications');
+    return db.query('notifications', orderBy: '$columnId DESC');
+  }
+
+  Future<int?> getNotificationCount() async {
+    Database db = await instance.database;
+    int? notificationCount =
+        firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM notifications'));
+    return notificationCount;
   }
 
   Future<int> insertNotification(Map<String, Object?> row) async {

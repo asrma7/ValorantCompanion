@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../Screens/Pages/notification_page.dart';
-
 class MyAppBar extends AppBar {
   final String appbarTitle;
   final int notificationCount;
@@ -47,12 +45,7 @@ class MyAppBar extends AppBar {
                     )
                   : const Icon(Icons.notifications),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationPage(),
-                  ),
-                );
+                Navigator.pushNamed(context, '/notifications');
               },
             ),
           ],

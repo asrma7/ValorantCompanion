@@ -1,17 +1,16 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:overlay_support/overlay_support.dart';
+import 'package:flutter_ringtone_player/flutter_ringtone_player.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:valorant_companion/Model/push_notification.dart';
 import 'package:valorant_companion/Utils/database_helper.dart';
 import 'package:valorant_companion/components/appbar.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-import '../Model/push_notification.dart';
 import '../Utils/ad_helper.dart';
 import '../components/drawer.dart';
 import '../components/home_screen_card.dart';
-import 'Pages/notification_page.dart';
 
 class HomeScreen extends StatefulWidget {
   final String title;
@@ -26,6 +25,86 @@ const int maxFailedLoadAttempts = 3;
 int currentAdLoadAttempt = 0;
 
 AppOpenAd? _appOpenAd;
+
+DatabaseHelper dbHelper = DatabaseHelper.instance;
+
+registerNotification(context) async {
+  FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+    if (message != null) {
+      Navigator.pushNamed(context, '/notifications',
+          arguments: PushNotification(
+            title: message.notification!.title!,
+            body: message.notification!.body!,
+            imageUrl: message.notification?.android?.imageUrl ??
+                message.notification?.apple?.imageUrl,
+          ));
+    }
+  });
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+  if ((await messaging.getNotificationSettings()).authorizationStatus ==
+      AuthorizationStatus.denied) {
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+    if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+      Fluttertoast.showToast(msg: "Notification permission denied");
+    }
+  }
+
+  FirebaseMessaging.onMessageOpenedApp.listen((message) {
+    if (message.notification != null) {
+      Navigator.pushNamed(context, '/notifications',
+          arguments: PushNotification(
+            title: message.notification!.title!,
+            body: message.notification!.body!,
+            imageUrl: message.notification?.android?.imageUrl ??
+                message.notification?.apple?.imageUrl,
+          ));
+    }
+  });
+  FirebaseMessaging.onMessage.listen((message) {
+    if (message.notification != null) {
+      String? imageUrl = message.notification!.android?.imageUrl ??
+          message.notification!.apple?.imageUrl;
+      dbHelper.insertNotification({
+        'titleText': message.notification!.title,
+        'bodyText': message.notification!.body,
+        'imageUrl': imageUrl,
+      });
+      FlutterRingtonePlayer.playNotification();
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(message.notification!.title!),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              imageUrl != null
+                  ? Image.network(
+                      imageUrl,
+                      height: 150,
+                    )
+                  : Container(),
+              Text(message.notification!.body!),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Ok'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
+      );
+    }
+  });
+}
 
 Future<void> _loadAppOpenAd(context) async {
   await MobileAds.instance.initialize();
@@ -110,77 +189,21 @@ _showAppOpenAd(context) {
 
 class _HomeScreenState extends State<HomeScreen> {
   DatabaseHelper dbHelper = DatabaseHelper.instance;
-  int _totalNotifications = 0;
-  late final FirebaseMessaging _messaging;
+
+  int? _totalNotifications = 0;
 
   @override
   void initState() {
-    registerNotification();
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      PushNotification notification = PushNotification(
-        title: message.notification?.title,
-        body: message.notification?.body,
-      );
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => NotificationPage(
-            openNotification: notification,
-          ),
-        ),
-      );
-    });
     _loadAppOpenAd(context);
+    registerNotification(context);
+    _getNotificationCount();
     super.initState();
   }
 
-  void registerNotification() async {
-    await Firebase.initializeApp();
-
-    _messaging = FirebaseMessaging.instance;
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-    NotificationSettings settings = await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      provisional: false,
-      sound: true,
-    );
-
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-        // Parse the message received
-        PushNotification notification = PushNotification(
-          title: message.notification?.title,
-          body: message.notification?.body,
-        );
-        await dbHelper.insertNotification(
-          {
-            'titleText': message.notification?.title,
-            'bodyText': message.notification?.body,
-            'imageUrl': message.notification?.android?.imageUrl ??
-                message.notification?.apple?.imageUrl,
-            'isRead': false,
-          },
-        );
-
-        setState(() {
-          _totalNotifications++;
-        });
-
-        showSimpleNotification(
-          Text(notification.title!),
-          leading: Image.asset('assets/images/logo_rounded.png'),
-          subtitle: Text(notification.body!),
-          background: Colors.cyan.shade700,
-          duration: const Duration(seconds: 2),
-        );
-      });
-    } else {
-      if (kDebugMode) {
-        print('User declined or has not accepted permission');
-      }
-    }
+  _getNotificationCount() async {
+    dbHelper.getNotificationCount().then((value) => setState(() {
+          _totalNotifications = value;
+        }));
   }
 
   void createOpenAd() {}
@@ -190,7 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: MyAppBar(
         appbarTitle: widget.title,
-        notificationCount: _totalNotifications,
+        notificationCount: _totalNotifications!,
         context: context,
       ),
       body: GridView(
@@ -273,21 +296,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       drawer: const MyDrawer(),
-    );
-  }
-}
-
-Future _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  if (kDebugMode) {
-    DatabaseHelper dbHelper = DatabaseHelper.instance;
-    await dbHelper.insertNotification(
-      {
-        'titleText': message.notification?.title,
-        'bodyText': message.notification?.body,
-        'imageUrl': message.notification?.android?.imageUrl ??
-            message.notification?.apple?.imageUrl,
-        'isRead': false,
-      },
     );
   }
 }

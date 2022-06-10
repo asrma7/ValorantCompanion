@@ -126,20 +126,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: _handlingForm
-                          ? const [
-                              Text('Login'),
-                              SizedBox(width: 8),
-                              CupertinoActivityIndicator(
-                                color: Colors.white,
-                              )
-                            ]
-                          : const [
-                              Text('Login'),
-                            ],
-                    ),
                     onPressed: _handlingForm
                         ? null
                         : () {
@@ -158,6 +144,20 @@ class _LoginScreenState extends State<LoginScreen> {
                               }
                             });
                           },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: _handlingForm
+                          ? const [
+                              Text('Login'),
+                              SizedBox(width: 8),
+                              CupertinoActivityIndicator(
+                                color: Colors.white,
+                              )
+                            ]
+                          : const [
+                              Text('Login'),
+                            ],
+                    ),
                   ),
                 ],
               ),
@@ -224,9 +224,8 @@ class _LoginScreenState extends State<LoginScreen> {
         'subject': user?.subject,
         'game_name': user?.gameName,
         'tagLine': user?.tagLine,
-        'playerCard': 'https://media.valorant-api.com/playercards/' +
-            inventory!.identity!.playerCardID! +
-            '/smallart.png',
+        'playerCard':
+            'https://media.valorant-api.com/playercards/${inventory!.identity!.playerCardID!}/smallart.png',
         'isActive': 1,
       });
       return true;

@@ -19,15 +19,13 @@ class _LandingScreenState extends State<LandingScreen> {
   DatabaseHelper? dbHelper;
   Future<List<Map<String, dynamic>>> _loadUserData() async {
     dbHelper = DatabaseHelper.instance;
-    List<int?> rowCount = await dbHelper!.queryRowCount();
-    if (rowCount[0] == 0) {
-      Navigator.of(context).popAndPushNamed('/login');
-    } else if (rowCount[1] != 0) {
-      Navigator.of(context).popAndPushNamed('/home');
-    } else {
-      return await dbHelper!.queryAllRows();
-    }
-    return [];
+    await dbHelper!.queryRowCount().then((rowCount) => {
+          if (rowCount[0] == 0)
+            {Navigator.of(context).popAndPushNamed('/login')}
+          else if (rowCount[1] != 0)
+            {Navigator.of(context).popAndPushNamed('/home')}
+        });
+    return await dbHelper!.queryAllRows();
   }
 
   @override
@@ -162,8 +160,9 @@ class _LandingScreenState extends State<LandingScreen> {
                       ),
                       ElevatedButton(
                         onPressed: () async {
-                          await dbHelper!.deleteAll();
-                          Navigator.of(context).popAndPushNamed('/login');
+                          await dbHelper!.deleteAll().then((value) => {
+                                Navigator.of(context).popAndPushNamed('/login')
+                              });
                         },
                         child: const Text('Logout of all Accounts'),
                       ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:valorant_companion/Components/store_item.dart';
 import 'package:valorant_companion/Components/timer.dart';
 import 'package:valorant_companion/Library/src/models/content_tiers.dart';
+import 'package:valorant_companion/Library/src/models/offers.dart';
 import 'package:valorant_companion/Utils/database_helper.dart';
 import 'package:valorant_companion/Utils/helpers.dart';
 import '../../Library/src/models/weapons.dart';
@@ -72,6 +73,7 @@ class _StorePageState extends State<StorePage> {
       client.assetInterface.getAssets<ContentTiers>(
           typeResolver: ContentTiers(), assetType: 'contenttiers'),
       client.playerInterface.getStorefront(),
+      client.playerInterface.getStoreOffers(),
     ];
     return await Future.wait(futures);
   }
@@ -89,6 +91,7 @@ class _StorePageState extends State<StorePage> {
             Skins skinList = snapshot.data[0]!;
             ContentTiers contentTiersList = snapshot.data[1]!;
             var response = snapshot.data[2]!;
+            Offers storeOffers = snapshot.data[3]!;
             List<String> items = response.skinsPanelLayout.singleItemOffers;
             return CustomScrollView(
               slivers: [
@@ -106,11 +109,16 @@ class _StorePageState extends State<StorePage> {
                     (context, index) {
                       Skin skin = skinList.skinList.singleWhere((element) =>
                           element.levels!.first.uuid == items[index]);
+                      int price = storeOffers.offerList
+                          .singleWhere((element) => element.id == items[index])
+                          .cost!
+                          .amount;
                       return StoreItem(
                         storeType: StoreType.dailyoffer,
                         itemId: items[index],
                         displayIcon:
                             skin.levels!.first.displayIcon ?? skin.displayIcon,
+                        basePrice: price.toDouble(),
                         displayName: skin.displayName,
                         streamedVideo: skin.levels!.last.streamedVideo,
                         contentTier: contentTiersList

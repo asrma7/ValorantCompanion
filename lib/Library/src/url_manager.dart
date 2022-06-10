@@ -8,7 +8,6 @@ class UrlManager {
       'https://entitlements.auth.riotgames.com/api/token/v1';
   static const String versionUrl = 'https://valorant-api.com/v1/version';
   static String getContentBaseUrl = 'https://valorant-api.com/v1';
-  static String getSingleOfferUrl = 'https://assist.rumblemike.com/Offers';
 
   static String getBaseUrlForRegion(Region region) =>
       'https://pd.${region.humanized}.a.pvp.net';
