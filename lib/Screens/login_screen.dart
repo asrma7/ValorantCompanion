@@ -211,25 +211,37 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       ),
     );
-    bool resp = await client.init();
+    try {
+      bool resp = await client.init();
 
-    if (resp) {
-      User? user = await client.playerInterface.getPlayer();
-      Inventory? inventory = await client.playerInterface.getInventory();
-      dbHelper.insert({
-        'username': username,
-        'password': password,
-        'region': region.humanized.toUpperCase(),
-        'display_name': user?.displayName,
-        'subject': user?.subject,
-        'game_name': user?.gameName,
-        'tagLine': user?.tagLine,
-        'playerCard':
-            'https://media.valorant-api.com/playercards/${inventory!.identity!.playerCardID!}/smallart.png',
-        'isActive': 1,
+      if (resp) {
+        User? user = await client.playerInterface.getPlayer();
+        Inventory? inventory = await client.playerInterface.getInventory();
+        dbHelper.insert({
+          'username': username,
+          'password': password,
+          'region': region.humanized.toUpperCase(),
+          'display_name': user?.displayName,
+          'subject': user?.subject,
+          'game_name': user?.gameName,
+          'tagLine': user?.tagLine,
+          'playerCard':
+              'https://media.valorant-api.com/playercards/${inventory!.identity!.playerCardID!}/smallart.png',
+          'isActive': 1,
+        });
+        return true;
+      } else {
+        return false;
+      }
+    } on DioError catch (e) {
+      setState(() {
+        _errorMessage = "Error: ${e.message}";
       });
-      return true;
-    } else {
+      return false;
+    } on Exception catch (e) {
+      setState(() {
+        _errorMessage = "Error: ${e.toString()}";
+      });
       return false;
     }
   }

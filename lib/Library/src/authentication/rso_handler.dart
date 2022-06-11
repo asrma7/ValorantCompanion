@@ -15,7 +15,15 @@ class RSOHandler {
     _tokenType = '';
     _authHeaders.clear();
     _userPuuid = '';
+    try {
+      await setSession();
+    } on DioError {
+      await setSession();
+    }
+    return tryAuthenticate();
+  }
 
+  setSession() async {
     await _client.post(
       UrlManager.authUrl,
       data: {
@@ -30,17 +38,17 @@ class RSOHandler {
         },
       ),
     );
+  }
 
+  Future<bool> tryAuthenticate() async {
     if (await _fetchAccessToken() &&
         await _fetchEntitlements() &&
         await _fetchClientVersion()) {
       _authHeaders[ClientConstants.clientPlatformHeaderKey] =
           ClientConstants.clientPlatformHeaderValue;
       _client.options.headers.addAll(_authHeaders);
-
       return true;
     }
-
     return false;
   }
 
@@ -56,65 +64,75 @@ class RSOHandler {
         'password': _userDetails.password,
       },
     );
+    Response? response;
     try {
-      final response = await _client.put(
+      response = await _client.put(
         UrlManager.authUrl,
         data: payload,
+        options: Options(headers: {
+          'Content-Type': 'application/json',
+          'User-Agent':
+              'RiotClient/44.0.1.4223069.4190634 rso-auth (Windows;10;;Professional, x64)',
+        }),
       );
-
-      if (response.statusCode != 200) {
-        return false;
-      }
-
-      if (response.data['error'] != null &&
-          response.data['error'] == 'auth_failure') {
-        return false;
-      }
-
-      final authUrl =
-          (response.data['response']?['parameters']?['uri'] ?? '') as String;
-      final parsedUri = Uri.tryParse(authUrl.replaceFirst('#', '?'));
-
-      if (parsedUri == null || !parsedUri.hasQuery) {
-        return false;
-      }
-
-      _tokenType = parsedUri.queryParameters['token_type'] as String;
-      _authHeaders[HttpHeaders.authorizationHeader] =
-          '$_tokenType ${parsedUri.queryParameters['access_token'] as String}';
-      _tokenExpiry =
-          (int.tryParse(parsedUri.queryParameters['expires_in'] ?? '3600') ??
-              3600);
-      const FlutterSecureStorage().write(
-        key: "tokenExpiry",
-        value: DateTime.now()
-            .add(
-              Duration(seconds: _tokenExpiry - 10),
-            )
-            .toString(),
+    } on DioError {
+      response = await _client.put(
+        UrlManager.authUrl,
+        data: payload,
+        options: Options(headers: {
+          'Content-Type': 'application/json',
+          'User-Agent':
+              'RiotClient/44.0.1.4223069.4190634 rso-auth (Windows;10;;Professional, x64)',
+        }),
       );
-      _userPuuid = response.headers['set-cookie']!
-          .singleWhere(
-            (cookie) => cookie.startsWith('sub='),
-          )
-          .split(';')[0]
-          .split('=')[1];
-      if (parsedUri.queryParameters['access_token'] != null) {
-        const FlutterSecureStorage().write(
-          key: "accessToken",
-          value: parsedUri.queryParameters['access_token'] as String,
-        );
-        const FlutterSecureStorage().write(
-          key: "userPuuid",
-          value: _userPuuid,
-        );
-        return true;
-      }
+    }
+    if (response.statusCode != 200) {
       return false;
-    } on DioError catch (error) {
-      if (kDebugMode) {
-        print(error.message);
-      }
+    }
+
+    if (response.data['error'] != null &&
+        response.data['error'] == 'auth_failure') {
+      return false;
+    }
+
+    final authUrl =
+        (response.data['response']?['parameters']?['uri'] ?? '') as String;
+    final parsedUri = Uri.tryParse(authUrl.replaceFirst('#', '?'));
+
+    if (parsedUri == null || !parsedUri.hasQuery) {
+      return false;
+    }
+
+    _tokenType = parsedUri.queryParameters['token_type'] as String;
+    _authHeaders[HttpHeaders.authorizationHeader] =
+        '$_tokenType ${parsedUri.queryParameters['access_token'] as String}';
+    _tokenExpiry =
+        (int.tryParse(parsedUri.queryParameters['expires_in'] ?? '3600') ??
+            3600);
+    const FlutterSecureStorage().write(
+      key: "tokenExpiry",
+      value: DateTime.now()
+          .add(
+            Duration(seconds: _tokenExpiry - 10),
+          )
+          .toString(),
+    );
+    _userPuuid = response.headers['set-cookie']!
+        .singleWhere(
+          (cookie) => cookie.startsWith('sub='),
+        )
+        .split(';')[0]
+        .split('=')[1];
+    if (parsedUri.queryParameters['access_token'] != null) {
+      const FlutterSecureStorage().write(
+        key: "accessToken",
+        value: parsedUri.queryParameters['access_token'] as String,
+      );
+      const FlutterSecureStorage().write(
+        key: "userPuuid",
+        value: _userPuuid,
+      );
+      return true;
     }
     return false;
   }
