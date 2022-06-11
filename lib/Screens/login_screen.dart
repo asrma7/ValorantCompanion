@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:valorant_companion/Library/src/interfaces/player.dart';
 import 'package:valorant_companion/Library/src/models/inventory.dart';
 import 'package:valorant_companion/Library/valorant_client.dart';
 
@@ -22,6 +23,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   Region region = Region.ap;
+
+  PlayerInterface playerInterface = PlayerInterface();
 
   bool _handlingForm = false;
 
@@ -191,32 +194,17 @@ class _LoginScreenState extends State<LoginScreen> {
       return false;
     }
     const FlutterSecureStorage().deleteAll();
-    ValorantClient client = ValorantClient(
-      UserDetails(
-        userName: username,
-        password: password,
-        region: region,
-      ),
-      shouldPersistSession: false,
-      callback: Callback(
-        onError: (String error) {
-          setState(() {
-            _errorMessage = "Error: $error";
-          });
-        },
-        onRequestError: (DioError error) {
-          setState(() {
-            _errorMessage = "Error: ${error.message}";
-          });
-        },
-      ),
-    );
+    ValorantClient client = ValorantClient.instance;
     try {
-      bool resp = await client.init();
+      var resp = await client.authenticate(
+        username,
+        password,
+        region,
+      );
 
       if (resp) {
-        User? user = await client.playerInterface.getPlayer();
-        Inventory? inventory = await client.playerInterface.getInventory();
+        User? user = await playerInterface.getPlayer();
+        Inventory? inventory = await playerInterface.getInventory();
         dbHelper.insert({
           'username': username,
           'password': password,

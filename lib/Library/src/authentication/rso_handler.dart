@@ -3,9 +3,9 @@ part of '../valorant_client_base.dart';
 class RSOHandler {
   final Dio _client;
   final UserDetails _userDetails;
-  final Map<String, dynamic> _authHeaders = {};
 
   String _tokenType = '';
+  String _accessToken = '';
   String _userPuuid = '';
   int _tokenExpiry = 3600;
 
@@ -13,13 +13,8 @@ class RSOHandler {
 
   Future<bool> authenticate() async {
     _tokenType = '';
-    _authHeaders.clear();
     _userPuuid = '';
-    try {
-      await setSession();
-    } on DioError {
-      await setSession();
-    }
+    await setSession();
     return tryAuthenticate();
   }
 
@@ -32,11 +27,6 @@ class RSOHandler {
         "redirect_uri": "https://playvalorant.com/opt_in",
         "response_type": "token id_token",
       },
-      options: Options(
-        headers: {
-          "Content-Type": "application/json",
-        },
-      ),
     );
   }
 
@@ -44,9 +34,6 @@ class RSOHandler {
     if (await _fetchAccessToken() &&
         await _fetchEntitlements() &&
         await _fetchClientVersion()) {
-      _authHeaders[ClientConstants.clientPlatformHeaderKey] =
-          ClientConstants.clientPlatformHeaderValue;
-      _client.options.headers.addAll(_authHeaders);
       return true;
     }
     return false;
@@ -65,27 +52,10 @@ class RSOHandler {
       },
     );
     Response? response;
-    try {
-      response = await _client.put(
-        UrlManager.authUrl,
-        data: payload,
-        options: Options(headers: {
-          'Content-Type': 'application/json',
-          'User-Agent':
-              'RiotClient/44.0.1.4223069.4190634 rso-auth (Windows;10;;Professional, x64)',
-        }),
-      );
-    } on DioError {
-      response = await _client.put(
-        UrlManager.authUrl,
-        data: payload,
-        options: Options(headers: {
-          'Content-Type': 'application/json',
-          'User-Agent':
-              'RiotClient/44.0.1.4223069.4190634 rso-auth (Windows;10;;Professional, x64)',
-        }),
-      );
-    }
+    response = await _client.put(
+      UrlManager.authUrl,
+      data: payload,
+    );
     if (response.statusCode != 200) {
       return false;
     }
@@ -104,11 +74,14 @@ class RSOHandler {
     }
 
     _tokenType = parsedUri.queryParameters['token_type'] as String;
-    _authHeaders[HttpHeaders.authorizationHeader] =
-        '$_tokenType ${parsedUri.queryParameters['access_token'] as String}';
     _tokenExpiry =
         (int.tryParse(parsedUri.queryParameters['expires_in'] ?? '3600') ??
             3600);
+    _accessToken = parsedUri.queryParameters['access_token'] as String;
+    const FlutterSecureStorage().write(
+      key: "userRegion",
+      value: _userDetails.region.humanized.toUpperCase(),
+    );
     const FlutterSecureStorage().write(
       key: "tokenExpiry",
       value: DateTime.now()
@@ -126,7 +99,7 @@ class RSOHandler {
     if (parsedUri.queryParameters['access_token'] != null) {
       const FlutterSecureStorage().write(
         key: "accessToken",
-        value: parsedUri.queryParameters['access_token'] as String,
+        value: _accessToken,
       );
       const FlutterSecureStorage().write(
         key: "userPuuid",
@@ -141,15 +114,16 @@ class RSOHandler {
     final response = await _client.post(
       UrlManager.entitlementsUrl,
       data: {},
-      options: Options(headers: _authHeaders),
+      options: Options(
+        headers: {
+          HttpHeaders.authorizationHeader: '$_tokenType $_accessToken',
+        },
+      ),
     );
 
     if (response.statusCode != 200) {
       return false;
     }
-
-    _authHeaders['X-Riot-Entitlements-JWT'] =
-        response.data['entitlements_token'] as String;
     if (response.data['entitlements_token'] != null) {
       const FlutterSecureStorage().write(
         key: "entitlementsToken",
@@ -166,9 +140,6 @@ class RSOHandler {
     if (response.statusCode != 200) {
       return false;
     }
-
-    _authHeaders['X-Riot-ClientVersion'] =
-        response.data['data']['riotClientVersion'] as String;
 
     if (response.data['data']['riotClientVersion'] != null) {
       const FlutterSecureStorage().write(

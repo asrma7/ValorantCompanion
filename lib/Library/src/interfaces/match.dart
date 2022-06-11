@@ -1,3 +1,6 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:valorant_companion/Utils/helpers.dart';
+
 import '../models/match.dart';
 import '../models/match_history.dart';
 
@@ -11,7 +14,10 @@ class MatchInterface {
 
   Future<Match?> getMatch(String matchPuuid) async {
     final requestUri = Uri.parse(UrlManager.getMatchInfoBaseUrlForRegion(
-        _client.userRegion, matchPuuid));
+        stringToRegion(
+            await const FlutterSecureStorage().read(key: 'userRegion') ??
+                "AP")!,
+        matchPuuid));
 
     return _client.executeGenericRequest<Match>(
       typeResolver: Match(),
@@ -23,7 +29,7 @@ class MatchInterface {
   Future<MatchHistory?> getHistory(
       {int startIndex = 0, int endIndex = 10}) async {
     final requestUri = Uri.parse(
-        '${UrlManager.getBaseUrlForRegion(_client.userRegion)}/match-history/v1/history/${_client.userPuuid}?startIndex=$startIndex&endIndex=$endIndex');
+        '${UrlManager.getBaseUrlForRegion(stringToRegion(await const FlutterSecureStorage().read(key: 'userRegion') ?? "AP")!)}/match-history/v1/history/${await const FlutterSecureStorage().read(key: 'userPuuid')}?startIndex=$startIndex&endIndex=$endIndex');
 
     return _client.executeGenericRequest<MatchHistory>(
       typeResolver: MatchHistory(),

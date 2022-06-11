@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:valorant_companion/Screens/login_screen.dart';
@@ -111,39 +110,11 @@ class _MyDrawerState extends State<MyDrawer> {
                     _isLoading = true;
                   });
                   const FlutterSecureStorage().deleteAll();
-                  ValorantClient client = ValorantClient(
-                    UserDetails(
-                      userName: users[index]['username'],
-                      password: users[index]['password'],
-                      region: stringToRegion(users[index]['region'])!,
-                    ),
-                    shouldPersistSession: false,
-                    callback: Callback(
-                      onError: (String error) {
-                        SnackBar(
-                          content: Text(
-                            error,
-                            style: const TextStyle(
-                              color: Colors.white,
-                            ),
-                          ),
-                          backgroundColor: Colors.red,
-                        );
-                      },
-                      onRequestError: (DioError error) {
-                        SnackBar(
-                          content: Text(
-                            error.message,
-                            style: const TextStyle(
-                              color: Colors.white,
-                            ),
-                          ),
-                          backgroundColor: Colors.red,
-                        );
-                      },
-                    ),
-                  );
-                  bool resp = await client.init();
+                  ValorantClient client = ValorantClient.instance;
+                  var resp = await client.authenticate(
+                      users[index]['username'],
+                      users[index]['password'],
+                      stringToRegion(users[index]['region'])!);
                   if (resp) {
                     await dbHelper.rawUpdate('UPDATE users SET isActive = 0');
                     await dbHelper.update({

@@ -1,9 +1,8 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:valorant_companion/Utils/helpers.dart';
 import '../Library/valorant_client.dart';
 import '../Utils/database_helper.dart';
-import '../Utils/helpers.dart';
 import 'update_password.dart';
 
 class LandingScreen extends StatefulWidget {
@@ -98,43 +97,17 @@ class _LandingScreenState extends State<LandingScreen> {
                                     _isLoading = true;
                                   });
                                   const FlutterSecureStorage().deleteAll();
-                                  ValorantClient client = ValorantClient(
-                                    UserDetails(
-                                      userName: users[index]['username'],
-                                      password: users[index]['password'],
-                                      region: stringToRegion(
-                                          users[index]['region'])!,
-                                    ),
-                                    shouldPersistSession: false,
-                                    callback: Callback(
-                                      onError: (String error) {
-                                        SnackBar(
-                                          content: Text(
-                                            error,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          backgroundColor: Colors.red,
-                                        );
-                                      },
-                                      onRequestError: (DioError error) {
-                                        SnackBar(
-                                          content: Text(
-                                            error.message,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          backgroundColor: Colors.red,
-                                        );
-                                      },
-                                    ),
-                                  );
-                                  bool resp = await client.init();
+                                  ValorantClient client =
+                                      ValorantClient.instance;
+
                                   setState(() {
                                     _isLoading = false;
                                   });
+                                  var resp = await client.authenticate(
+                                    users[index]['username'],
+                                    users[index]['password'],
+                                    stringToRegion(users[index]['region'])!,
+                                  );
                                   if (resp) {
                                     await dbHelper!.rawUpdate(
                                         'UPDATE users SET isActive = 0');

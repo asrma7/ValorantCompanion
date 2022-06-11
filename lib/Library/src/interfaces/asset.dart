@@ -4,9 +4,7 @@ import '../url_manager.dart';
 import '../valorant_client_base.dart';
 
 class AssetInterface {
-  final ValorantClient _client;
-
-  AssetInterface(this._client);
+  final ValorantClient _client = ValorantClient.instance;
 
   Future<T?> getAssets<T extends ISerializable<T>>({
     required T typeResolver,

@@ -1,4 +1,6 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:valorant_companion/Library/src/models/inventory.dart';
+import 'package:valorant_companion/Utils/helpers.dart';
 
 import '../constants.dart';
 import '../enums.dart';
@@ -11,17 +13,17 @@ import '../url_manager.dart';
 import '../valorant_client_base.dart';
 
 class PlayerInterface {
-  final ValorantClient _client;
+  final ValorantClient _client = ValorantClient.instance;
 
-  PlayerInterface(this._client);
+  PlayerInterface();
 
   Future<User?> getPlayer() async {
     final requestUri = Uri.parse(
-        '${UrlManager.getBaseUrlForRegion(_client.userRegion)}/name-service/v2/players');
+        '${UrlManager.getBaseUrlForRegion(stringToRegion(await const FlutterSecureStorage().read(key: 'userRegion') ?? "AP")!)}/name-service/v2/players');
     final response = await _client.executeRawRequest(
       method: HttpMethod.put,
       uri: requestUri,
-      body: '["${_client.userPuuid}"]',
+      body: '["${await const FlutterSecureStorage().read(key: 'userPuuid')}"]',
     );
 
     if (response == null) {
@@ -33,7 +35,7 @@ class PlayerInterface {
 
   Future<Balance?> getBalance() async {
     final requestUri = Uri.parse(
-        '${UrlManager.getBaseUrlForRegion(_client.userRegion)}/store/v1/wallet/${_client.userPuuid}');
+        '${UrlManager.getBaseUrlForRegion(stringToRegion(await const FlutterSecureStorage().read(key: 'userRegion') ?? "AP")!)}/store/v1/wallet/${await const FlutterSecureStorage().read(key: 'userPuuid')}');
     final response = await _client.executeRawRequest(
       method: HttpMethod.get,
       uri: requestUri,
@@ -57,7 +59,7 @@ class PlayerInterface {
 
   Future<MMR?> getMMR() async {
     final requestUri = Uri.parse(
-        '${UrlManager.getBaseUrlForRegion(_client.userRegion)}/mmr/v1/players/${_client.userPuuid}/competitiveupdates');
+        '${UrlManager.getBaseUrlForRegion(stringToRegion(await const FlutterSecureStorage().read(key: 'userRegion') ?? "AP")!)}/mmr/v1/players/${await const FlutterSecureStorage().read(key: 'userPuuid')}/competitiveupdates');
     final response = await _client.executeGenericRequest<MMR>(
       typeResolver: MMR(),
       method: HttpMethod.get,
@@ -73,7 +75,7 @@ class PlayerInterface {
 
   Future<Storefront?> getStorefront() async {
     final requestUri = Uri.parse(
-        '${UrlManager.getBaseUrlForRegion(_client.userRegion)}/store/v2/storefront/${_client.userPuuid}');
+        '${UrlManager.getBaseUrlForRegion(stringToRegion(await const FlutterSecureStorage().read(key: 'userRegion') ?? "AP")!)}/store/v2/storefront/${await const FlutterSecureStorage().read(key: 'userPuuid')}');
 
     return await _client.executeGenericRequest<Storefront>(
       typeResolver: Storefront(),
@@ -84,7 +86,7 @@ class PlayerInterface {
 
   Future<Offers?> getStoreOffers() async {
     final requestUri = Uri.parse(
-        '${UrlManager.getBaseUrlForRegion(_client.userRegion)}/store/v1/offers/');
+        '${UrlManager.getBaseUrlForRegion(stringToRegion(await const FlutterSecureStorage().read(key: 'userRegion') ?? "AP")!)}/store/v1/offers/');
 
     return await _client.executeGenericRequest<Offers>(
       typeResolver: Offers(),
@@ -95,7 +97,7 @@ class PlayerInterface {
 
   Future<Inventory?> getInventory() async {
     final requestUri = Uri.parse(
-        '${UrlManager.getBaseUrlForRegion(_client.userRegion)}/personalization/v2/players/${_client.userPuuid}/playerloadout');
+        '${UrlManager.getBaseUrlForRegion(stringToRegion(await const FlutterSecureStorage().read(key: 'userRegion') ?? "AP")!)}/personalization/v2/players/${await const FlutterSecureStorage().read(key: 'userPuuid')}/playerloadout');
     final response = await _client.executeRawRequest(
       method: HttpMethod.get,
       uri: requestUri,

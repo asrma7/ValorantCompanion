@@ -1,6 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:valorant_companion/Components/store_item.dart';
+import 'package:valorant_companion/Library/src/interfaces/asset.dart';
+import 'package:valorant_companion/Library/src/interfaces/player.dart';
 import 'package:valorant_companion/Library/src/models/buddies.dart';
 import 'package:valorant_companion/Library/src/models/playercard.dart';
 import 'package:valorant_companion/Library/src/models/playertitle.dart';
@@ -9,10 +10,8 @@ import '../../Library/src/models/weapons.dart';
 import '/Components/timer.dart';
 import '/Library/valorant_client.dart';
 import '/Library/src/models/storefront.dart';
-import 'package:dio/dio.dart';
 
 import '/Utils/database_helper.dart';
-import '/Utils/helpers.dart';
 
 class FeaturedPage extends StatefulWidget {
   final String title;
@@ -24,7 +23,8 @@ class FeaturedPage extends StatefulWidget {
 
 class _FeaturedPageState extends State<FeaturedPage> {
   final dbHelper = DatabaseHelper.instance;
-  bool _clientHasError = false;
+  AssetInterface assetInterface = AssetInterface();
+  PlayerInterface playerInterface = PlayerInterface();
 
   Map<String, dynamic>? user;
 
@@ -41,44 +41,18 @@ class _FeaturedPageState extends State<FeaturedPage> {
     if (user == null) {
       await _loadUserData();
     }
-    ValorantClient client = ValorantClient(
-      UserDetails(
-        userName: user!['username'],
-        password: user!['password'],
-        region: stringToRegion(user!['region'])!,
-      ),
-      shouldPersistSession: false,
-      callback: Callback(onError: (String error) {
-        _clientHasError = true;
-        if (error == "Authentication Failed.") {
-          dbHelper.activeUserHasError();
-          Navigator.pop(context);
-          Navigator.popAndPushNamed(context, '/');
-        } else {
-          if (kDebugMode) {
-            print(error);
-          }
-        }
-      }, onRequestError: (DioError error) {
-        _clientHasError = true;
-        if (kDebugMode) {
-          print(error);
-        }
-      }),
-    );
-    await client.init();
     var futures = <Future>[
-      client.assetInterface
-          .getAssets<Skins>(typeResolver: Skins(), assetType: 'weapons/skins'),
-      client.assetInterface
-          .getAssets<Spray>(typeResolver: Spray(), assetType: 'sprays'),
-      client.assetInterface.getAssets<PlayerCards>(
+      assetInterface.getAssets<Skins>(
+          typeResolver: Skins(), assetType: 'weapons/skins'),
+      assetInterface.getAssets<Spray>(
+          typeResolver: Spray(), assetType: 'sprays'),
+      assetInterface.getAssets<PlayerCards>(
           typeResolver: PlayerCards(), assetType: 'playercards'),
-      client.assetInterface.getAssets<PlayerTitles>(
+      assetInterface.getAssets<PlayerTitles>(
           typeResolver: PlayerTitles(), assetType: 'playertitles'),
-      client.assetInterface
-          .getAssets<Buddies>(typeResolver: Buddies(), assetType: 'buddies'),
-      client.playerInterface.getStorefront(),
+      assetInterface.getAssets<Buddies>(
+          typeResolver: Buddies(), assetType: 'buddies'),
+      playerInterface.getStorefront(),
     ];
     return await Future.wait(futures);
   }
@@ -92,7 +66,7 @@ class _FeaturedPageState extends State<FeaturedPage> {
       body: FutureBuilder(
         future: getStoreOffers(),
         builder: (context, AsyncSnapshot snapshot) {
-          if (snapshot.hasData && !_clientHasError) {
+          if (snapshot.hasData) {
             Skins skinList = snapshot.data[0];
             Spray sprayList = snapshot.data[1];
             PlayerCards playerCardList = snapshot.data[2];
@@ -200,7 +174,7 @@ class _FeaturedPageState extends State<FeaturedPage> {
                 ),
               ],
             );
-          } else if (snapshot.hasError || _clientHasError) {
+          } else if (snapshot.hasError) {
             return Container();
           } else {
             return const Center(

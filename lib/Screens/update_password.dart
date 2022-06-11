@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -153,27 +152,8 @@ class _UpdateUserPasswordState extends State<UpdateUserPassword> {
       return false;
     }
     const FlutterSecureStorage().deleteAll();
-    ValorantClient client = ValorantClient(
-      UserDetails(
-        userName: username,
-        password: password,
-        region: region!,
-      ),
-      shouldPersistSession: false,
-      callback: Callback(
-        onError: (String error) {
-          setState(() {
-            _errorMessage = "Error: $error";
-          });
-        },
-        onRequestError: (DioError error) {
-          setState(() {
-            _errorMessage = "Error: ${error.message}";
-          });
-        },
-      ),
-    );
-    bool resp = await client.init();
+    ValorantClient client = ValorantClient.instance;
+    bool resp = await client.authenticate(username, password, region!);
 
     if (resp) {
       dbHelper.update({

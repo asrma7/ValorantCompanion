@@ -1,6 +1,6 @@
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:valorant_companion/Library/src/interfaces/asset.dart';
+import 'package:valorant_companion/Library/src/interfaces/player.dart';
 import 'package:valorant_companion/Library/src/models/inventory.dart';
 import 'package:valorant_companion/Library/src/models/playercard.dart';
 import 'package:valorant_companion/Library/src/models/playertitle.dart';
@@ -8,9 +8,7 @@ import 'package:valorant_companion/Library/src/models/spray.dart';
 import 'package:valorant_companion/Screens/Views/inventory_identity_view.dart';
 
 import '../../Library/src/models/weapons.dart';
-import '../../Library/valorant_client.dart';
 import '../../Utils/database_helper.dart';
-import '../../Utils/helpers.dart';
 import '../Views/inventory_sprays_view.dart';
 import '../Views/inventory_weapons_view.dart';
 
@@ -25,7 +23,8 @@ class InventoryPage extends StatefulWidget {
 class _InventoryPageState extends State<InventoryPage> {
   final dbHelper = DatabaseHelper.instance;
 
-  bool _clientHasError = false;
+  AssetInterface assetInterface = AssetInterface();
+  PlayerInterface playerInterface = PlayerInterface();
 
   Map<String, dynamic>? user;
 
@@ -42,45 +41,16 @@ class _InventoryPageState extends State<InventoryPage> {
     if (user == null) {
       await _loadUserData();
     }
-    ValorantClient client = ValorantClient(
-      UserDetails(
-        userName: user!['username'],
-        password: user!['password'],
-        region: stringToRegion(user!['region'])!,
-      ),
-      shouldPersistSession: false,
-      callback: Callback(
-        onError: (String error) {
-          _clientHasError = true;
-          if (error == "Authentication Failed.") {
-            dbHelper.activeUserHasError();
-            Navigator.pop(context);
-            Navigator.popAndPushNamed(context, '/');
-          } else {
-            if (kDebugMode) {
-              print(error);
-            }
-          }
-        },
-        onRequestError: (DioError error) {
-          _clientHasError = true;
-          if (kDebugMode) {
-            print(error.message);
-          }
-        },
-      ),
-    );
-    await client.init();
     var futures = <Future>[
-      client.assetInterface
-          .getAssets<Weapons>(typeResolver: Weapons(), assetType: 'weapons'),
-      client.assetInterface
-          .getAssets<Spray>(typeResolver: Spray(), assetType: 'sprays'),
-      client.assetInterface.getAssets<PlayerCards>(
+      assetInterface.getAssets<Weapons>(
+          typeResolver: Weapons(), assetType: 'weapons'),
+      assetInterface.getAssets<Spray>(
+          typeResolver: Spray(), assetType: 'sprays'),
+      assetInterface.getAssets<PlayerCards>(
           typeResolver: PlayerCards(), assetType: 'playercards'),
-      client.assetInterface.getAssets<PlayerTitles>(
+      assetInterface.getAssets<PlayerTitles>(
           typeResolver: PlayerTitles(), assetType: 'playertitles'),
-      client.playerInterface.getInventory(),
+      playerInterface.getInventory(),
     ];
     return await Future.wait(futures);
   }
@@ -95,7 +65,7 @@ class _InventoryPageState extends State<InventoryPage> {
       body: FutureBuilder(
           future: getPlayerInventory(),
           builder: (context, AsyncSnapshot snapshot) {
-            if (snapshot.hasData && !_clientHasError) {
+            if (snapshot.hasData) {
               Weapons weaponList = snapshot.data![0]!;
               Spray sprayList = snapshot.data![1]!;
               PlayerCards playerCards = snapshot.data![2]!;
@@ -145,7 +115,7 @@ class _InventoryPageState extends State<InventoryPage> {
                 ),
               );
             }
-            if (snapshot.hasError || _clientHasError) {
+            if (snapshot.hasError) {
               return const Center(
                 child: Text("Error"),
               );
