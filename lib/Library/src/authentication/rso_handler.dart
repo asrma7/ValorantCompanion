@@ -19,6 +19,11 @@ class RSOHandler {
   }
 
   setSession() async {
+    CookieManager cookies = _client.interceptors.firstWhere(
+      (interceptor) => interceptor is CookieManager,
+    ) as CookieManager;
+
+    cookies.cookieJar.delete(Uri(host: 'auth.riotgames.com'));
     await _client.post(
       UrlManager.authUrl,
       data: {

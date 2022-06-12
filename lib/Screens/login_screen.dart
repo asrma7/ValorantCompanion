@@ -219,6 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
         });
         return true;
       } else {
+        _errorMessage = "Error: Authentication failed";
         return false;
       }
     } on DioError catch (e) {

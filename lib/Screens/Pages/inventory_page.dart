@@ -66,54 +66,60 @@ class _InventoryPageState extends State<InventoryPage> {
           future: getPlayerInventory(),
           builder: (context, AsyncSnapshot snapshot) {
             if (snapshot.hasData) {
-              Weapons weaponList = snapshot.data![0]!;
-              Spray sprayList = snapshot.data![1]!;
-              PlayerCards playerCards = snapshot.data![2]!;
-              PlayerTitles playerTitles = snapshot.data![3]!;
-              Inventory inventory = snapshot.data![4]!;
-              return DefaultTabController(
-                length: 3,
-                child: Column(
-                  children: [
-                    Container(
-                      color: Colors.red,
-                      child: const TabBar(
-                        tabs: [
-                          Tab(
-                            text: "Weapons",
-                          ),
-                          Tab(
-                            text: "Sprays",
-                          ),
-                          Tab(
-                            text: "Identity",
-                          ),
-                        ],
+              try {
+                Weapons weaponList = snapshot.data![0]!;
+                Spray sprayList = snapshot.data![1]!;
+                PlayerCards playerCards = snapshot.data![2]!;
+                PlayerTitles playerTitles = snapshot.data![3]!;
+                Inventory inventory = snapshot.data![4]!;
+                return DefaultTabController(
+                  length: 3,
+                  child: Column(
+                    children: [
+                      Container(
+                        color: Colors.red,
+                        child: const TabBar(
+                          tabs: [
+                            Tab(
+                              text: "Weapons",
+                            ),
+                            Tab(
+                              text: "Sprays",
+                            ),
+                            Tab(
+                              text: "Identity",
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: TabBarView(
-                        children: [
-                          InventoryWeaponsView(
-                            guns: inventory.guns!,
-                            weaponList: weaponList,
-                          ),
-                          InventorySpraysView(
-                            sprays: inventory.sprays!,
-                            sprayList: sprayList,
-                          ),
-                          InventoryIdentityView(
-                            playerCard: playerCards.getPlayerCardFromId(
-                                inventory.identity!.playerCardID!)!,
-                            playerTitle: playerTitles.getPlayerTitleFromId(
-                                inventory.identity!.playerTitleID!)!,
-                          ),
-                        ],
+                      Expanded(
+                        child: TabBarView(
+                          children: [
+                            InventoryWeaponsView(
+                              guns: inventory.guns!,
+                              weaponList: weaponList,
+                            ),
+                            InventorySpraysView(
+                              sprays: inventory.sprays!,
+                              sprayList: sprayList,
+                            ),
+                            InventoryIdentityView(
+                              playerCard: playerCards.getPlayerCardFromId(
+                                  inventory.identity!.playerCardID!)!,
+                              playerTitle: playerTitles.getPlayerTitleFromId(
+                                  inventory.identity!.playerTitleID!)!,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              );
+                    ],
+                  ),
+                );
+              } catch (e) {
+                return const Center(
+                  child: Text('Error'),
+                );
+              }
             }
             if (snapshot.hasError) {
               return const Center(
