@@ -38,14 +38,19 @@ class _NightMarketPageState extends State<NightMarketPage> {
     if (user == null) {
       await _loadUserData();
     }
+    Storefront? storeFront = await playerInterface.getStorefront();
     var futures = <Future>[
       assetInterface.getAssets<Skins>(
           typeResolver: Skins(), assetType: 'weapons/skins'),
       assetInterface.getAssets<ContentTiers>(
           typeResolver: ContentTiers(), assetType: 'contenttiers'),
-      playerInterface.getStorefront(),
     ];
-    return await Future.wait(futures);
+    List resources = await Future.wait(futures);
+    return {
+      'skins': resources[0],
+      'contentTiers': resources[1],
+      'storeFront': storeFront,
+    };
   }
 
   @override
@@ -58,23 +63,23 @@ class _NightMarketPageState extends State<NightMarketPage> {
         future: getStoreOffers(),
         builder: (context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
-            if (snapshot.data[2].bonusStore == null) {
+            if (snapshot.data['storeFront'].bonusStore == null) {
               return const Center(
                 child: Text('Night Market is not available'),
               );
             }
-            Skins skinList = snapshot.data[0]!;
-            ContentTiers contentTiersList = snapshot.data[1]!;
-            Storefront response = snapshot.data[2]!;
+            Skins skinList = snapshot.data['skins']!;
+            ContentTiers contentTiersList = snapshot.data['contentTiers']!;
+            Storefront storeFront = snapshot.data['storeFront']!;
             List<BonusStoreOffers> items =
-                response.bonusStore!.bonusStoreOffers!;
+                storeFront.bonusStore!.bonusStoreOffers!;
             return CustomScrollView(
               slivers: [
                 SliverToBoxAdapter(
                   child: Container(
                     padding: const EdgeInsets.all(20.0),
                     child: TimerComponent(
-                      time: response
+                      time: storeFront
                           .bonusStore!.bonusStoreRemainingDurationInSeconds!,
                     ),
                   ),

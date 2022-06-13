@@ -194,7 +194,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-    _loadAppOpenAd(context);
+    if (!kDebugMode) {
+      _loadAppOpenAd(context);
+    }
     registerNotification(context);
     _getNotificationCount();
     super.initState();

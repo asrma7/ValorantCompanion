@@ -6,6 +6,7 @@ import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:valorant_companion/Library/src/enums.dart';
 import 'package:valorant_companion/Library/src/extensions.dart';
 import 'constants.dart';
@@ -38,14 +39,15 @@ class ValorantClient {
   Future<Dio> _createClient() async {
     final client = Dio();
     client.options.headers = _headers;
-    // Directory appDocDir = await getApplicationDocumentsDirectory();
-    // String cookiePath = appDocDir.path;
-    client.interceptors.add(CookieManager(
-      CookieJar(
-        // storage: FileStorage('$cookiePath/valocompanion/.cookies'),
-        ignoreExpires: true,
-      ),
-    ));
+    Directory appDocDir = await getExternalStorageDirectory() as Directory;
+    String cookiePath = appDocDir.path;
+    final cookieJar = PersistCookieJar(
+      storage: FileStorage('$cookiePath/valocompanion/.cookies'),
+      persistSession: true,
+      ignoreExpires: true,
+    );
+    await cookieJar.loadForRequest(Uri.parse('https://auth.riotgames.com'));
+    client.interceptors.add(CookieManager(cookieJar));
     try {
       await client.post(
         UrlManager.authUrl,
@@ -63,8 +65,8 @@ class ValorantClient {
       String username, String password, Region region) async {
     final client = await instance.client;
     RSOHandler rsoHandler = RSOHandler(
-      client,
-      UserDetails(
+      client: client,
+      userDetails: UserDetails(
         userName: username,
         password: password,
         region: region,
@@ -127,26 +129,17 @@ class ValorantClient {
       required Uri uri,
       dynamic body}) async {
     final client = await instance.client;
+    String? accessToken =
+        await const FlutterSecureStorage().read(key: 'accessToken');
     client.options.headers.addAll({
-      "Authorization":
-          "Bearer ${await const FlutterSecureStorage().read(key: 'accessToken')}",
+      "Authorization": "Bearer $accessToken",
       "X-Riot-Entitlements-JWT":
           await const FlutterSecureStorage().read(key: 'entitlementsToken'),
       "X-Riot-ClientVersion":
           await const FlutterSecureStorage().read(key: 'clientVersion'),
     });
     Response<dynamic> response;
-
-    if (body == null) {
-      response = await client.requestUri(
-        uri,
-        options: Options(
-          contentType: ContentType.json.value,
-          responseType: ResponseType.json,
-          method: method.humanized.toUpperCase(),
-        ),
-      );
-    } else {
+    try {
       response = await client.requestUri(
         uri,
         data: body,
@@ -156,6 +149,30 @@ class ValorantClient {
           method: method.humanized.toUpperCase(),
         ),
       );
+    } on DioError catch (e) {
+      if (e.response?.statusCode == 400 &&
+          e.response?.data['errorCode'] == "BAD_CLAIMS") {
+        bool renewSuccess = await RSOHandler(client: client).renewAccessToken();
+        if (renewSuccess) {
+          String? newAccessToken =
+              await const FlutterSecureStorage().read(key: 'accessToken');
+          client.options.headers
+              .update('Authorization', (value) => "Bearer $newAccessToken");
+          response = await client.requestUri(
+            uri,
+            data: body,
+            options: Options(
+              contentType: ContentType.json.value,
+              responseType: ResponseType.json,
+              method: method.humanized.toUpperCase(),
+            ),
+          );
+        } else {
+          throw Exception("Failed to renew access token");
+        }
+      } else {
+        rethrow;
+      }
     }
 
     if (response.statusCode != 200) {
