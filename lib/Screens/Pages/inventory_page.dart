@@ -41,6 +41,7 @@ class _InventoryPageState extends State<InventoryPage> {
     if (user == null) {
       await _loadUserData();
     }
+    Inventory? inventory = await playerInterface.getInventory();
     var futures = <Future>[
       assetInterface.getAssets<Weapons>(
           typeResolver: Weapons(), assetType: 'weapons'),
@@ -50,9 +51,15 @@ class _InventoryPageState extends State<InventoryPage> {
           typeResolver: PlayerCards(), assetType: 'playercards'),
       assetInterface.getAssets<PlayerTitles>(
           typeResolver: PlayerTitles(), assetType: 'playertitles'),
-      playerInterface.getInventory(),
     ];
-    return await Future.wait(futures);
+    List resources = await Future.wait(futures);
+    return {
+      'weapons': resources[0],
+      'sprays': resources[1],
+      'playercards': resources[2],
+      'playertitles': resources[3],
+      'inventory': inventory,
+    };
   }
 
   @override
@@ -67,11 +74,11 @@ class _InventoryPageState extends State<InventoryPage> {
           builder: (context, AsyncSnapshot snapshot) {
             if (snapshot.hasData) {
               try {
-                Weapons weaponList = snapshot.data![0]!;
-                Spray sprayList = snapshot.data![1]!;
-                PlayerCards playerCards = snapshot.data![2]!;
-                PlayerTitles playerTitles = snapshot.data![3]!;
-                Inventory inventory = snapshot.data![4]!;
+                Weapons weaponList = snapshot.data!['weapons']!;
+                Spray sprayList = snapshot.data!['sprays']!;
+                PlayerCards playerCards = snapshot.data!['playercards']!;
+                PlayerTitles playerTitles = snapshot.data!['playertitles']!;
+                Inventory inventory = snapshot.data!['inventory']!;
                 return DefaultTabController(
                   length: 3,
                   child: Column(

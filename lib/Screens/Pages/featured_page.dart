@@ -41,6 +41,7 @@ class _FeaturedPageState extends State<FeaturedPage> {
     if (user == null) {
       await _loadUserData();
     }
+    Storefront? storeFront = await playerInterface.getStorefront();
     var futures = <Future>[
       assetInterface.getAssets<Skins>(
           typeResolver: Skins(), assetType: 'weapons/skins'),
@@ -52,9 +53,16 @@ class _FeaturedPageState extends State<FeaturedPage> {
           typeResolver: PlayerTitles(), assetType: 'playertitles'),
       assetInterface.getAssets<Buddies>(
           typeResolver: Buddies(), assetType: 'buddies'),
-      playerInterface.getStorefront(),
     ];
-    return await Future.wait(futures);
+    List resources = await Future.wait(futures);
+    return {
+      'skins': resources[0],
+      'sprays': resources[1],
+      'playercards': resources[2],
+      'playertitles': resources[3],
+      'buddies': resources[4],
+      'storefront': storeFront,
+    };
   }
 
   @override
@@ -67,12 +75,12 @@ class _FeaturedPageState extends State<FeaturedPage> {
         future: getStoreOffers(),
         builder: (context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
-            Skins skinList = snapshot.data[0];
-            Spray sprayList = snapshot.data[1];
-            PlayerCards playerCardList = snapshot.data[2];
-            PlayerTitles playerTitleList = snapshot.data[3];
-            Buddies buddyList = snapshot.data[4];
-            var response = snapshot.data[5];
+            Skins skinList = snapshot.data['skins'];
+            Spray sprayList = snapshot.data['sprays'];
+            PlayerCards playerCardList = snapshot.data['playercards'];
+            PlayerTitles playerTitleList = snapshot.data['playertitles'];
+            Buddies buddyList = snapshot.data['buddies'];
+            var response = snapshot.data['storefront'];
             List<ItemElement> items = response.featuredBundle.bundle.items;
             return CustomScrollView(
               slivers: [

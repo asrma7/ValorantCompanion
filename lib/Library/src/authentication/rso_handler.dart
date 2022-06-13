@@ -9,7 +9,14 @@ class RSOHandler {
   String _userPuuid = '';
   int _tokenExpiry = 3600;
 
-  RSOHandler(this._client, this._userDetails);
+  RSOHandler({required Dio client, UserDetails? userDetails})
+      : _client = client,
+        _userDetails = userDetails ??
+            UserDetails(
+              userName: '',
+              password: '',
+              region: Region.ap,
+            );
 
   Future<bool> authenticate() async {
     _tokenType = '';
@@ -150,6 +157,57 @@ class RSOHandler {
       const FlutterSecureStorage().write(
         key: "clientVersion",
         value: response.data['data']['riotClientVersion'] as String,
+      );
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> renewAccessToken() async {
+    Response? response;
+    response = await _client.post(
+      UrlManager.authUrl,
+      data: {
+        "client_id": "play-valorant-web-prod",
+        "nonce": "1",
+        "redirect_uri": "https://playvalorant.com/opt_in",
+        "response_type": "token id_token",
+      },
+    );
+    if (response.statusCode != 200) {
+      return false;
+    }
+
+    if (response.data['error'] != null &&
+        response.data['error'] == 'auth_failure') {
+      return false;
+    }
+
+    final authUrl =
+        (response.data['response']?['parameters']?['uri'] ?? '') as String;
+    final parsedUri = Uri.tryParse(authUrl.replaceFirst('#', '?'));
+
+    if (parsedUri == null || !parsedUri.hasQuery) {
+      return false;
+    }
+
+    _tokenType = parsedUri.queryParameters['token_type'] as String;
+    _tokenExpiry =
+        (int.tryParse(parsedUri.queryParameters['expires_in'] ?? '3600') ??
+            3600);
+    _accessToken = parsedUri.queryParameters['access_token'] as String;
+    const FlutterSecureStorage().write(
+      key: "tokenExpiry",
+      value: DateTime.now()
+          .add(
+            Duration(seconds: _tokenExpiry - 10),
+          )
+          .toString(),
+    );
+    if (parsedUri.queryParameters['access_token'] != null) {
+      const FlutterSecureStorage().write(
+        key: "accessToken",
+        value: _accessToken,
       );
       return true;
     }
